@@ -6,4 +6,5 @@
 - Client - ReactJS - Render.com
 - Storage - S3 - aws.com
 
-### Live @ https://kacify-2klc.onrender.com
+### Frontend live @ https://kacifyfrontend.onrender.com
+### API live @ https://kacifyapi.onrender.com
