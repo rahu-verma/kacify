@@ -1,10 +1,9 @@
 # KACIFY - An ecommerce for iphone cases
 
 ## Tech Stack
-- Database - MongoDB - mongodb.com
-- Server - NodeJS/ExpressJS - Render.com
-- Client - ReactJS - Render.com
-- Storage - S3 - aws.com
+- Database - MongoDB
+- Server - NodeJS/ExpressJS
+- Client - ReactJS
 
-### Frontend live @ https://kacifyfrontend.onrender.com
-### API live @ https://kacifyapi.onrender.com
+### Frontend live @ https://kacify-frontend-33ho.onrender.com
+### API live @ https://kacify-api.onrender.com

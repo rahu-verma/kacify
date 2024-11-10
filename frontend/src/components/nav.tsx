@@ -1,20 +1,55 @@
 import { BiSolidShoppingBagAlt } from "react-icons/bi";
 import { FaUserCircle } from "react-icons/fa";
+import styled from "styled-components";
 
 const Navbar = () => {
   return (
-    <div>
-      <span>KACIFY</span>
-      <div>
-        <div>
-          <BiSolidShoppingBagAlt size={40} />
-        </div>
-        <div>
-          <FaUserCircle size={35} />
-        </div>
-      </div>
-    </div>
+    <Container>
+      <Logo>KACIFY</Logo>
+      <ActionsContainer>
+        <ShoppingBagIcon />
+        <UserIcon />
+      </ActionsContainer>
+    </Container>
   );
 };
 
 export default Navbar;
+
+const Container = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+`;
+
+const Logo = styled.span`
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
+const ActionsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ShoppingBagIcon = styled(BiSolidShoppingBagAlt)`
+  font-size: 40px;
+  cursor: pointer;
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
+const UserIcon = styled(FaUserCircle)`
+  font-size: 35px;
+  cursor: pointer;
+  &:hover {
+    opacity: 0.8;
+  }
+`;

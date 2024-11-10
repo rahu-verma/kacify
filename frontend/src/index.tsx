@@ -6,6 +6,7 @@ const App = () => {
   return (
     <>
       <Nav />
+      <div style={{ height: 20 }} />
       <Products />
     </>
   );
