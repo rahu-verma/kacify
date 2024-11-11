@@ -21,6 +21,7 @@ const Container = styled.div`
   justify-content: space-between;
   align-items: center;
   position: sticky;
+  padding: 10px 0px;
 `;
 
 const Logo = styled.span`
@@ -30,6 +31,7 @@ const Logo = styled.span`
   &:hover {
     opacity: 0.8;
   }
+  color: #A79A85;
 `;
 
 const ActionsContainer = styled.div`
