@@ -1,5 +1,3 @@
-import styled from "styled-components";
-
 const Products = () => {
   const products: {
     id: string;
@@ -23,7 +21,7 @@ const Products = () => {
     },
     {
       id: "3",
-      name: "Marvel",
+      name: "Deadpool",
       price: 40,
       image:
         "https://ae-pic-a1.aliexpress-media.com/kf/Sbcd33a57920c4606bf9ba892dfa23e91F/Marvel-Groot-Deadpool-Cover-Phone-Case-for-Apple-iPhone-15-Pro-Max-16-Pro-14-Pro.jpg_.webp",
@@ -66,58 +64,27 @@ const Products = () => {
   ];
 
   return (
-    <Container>
+    <div className="flex flex-wrap gap-5 justify-between ">
       {products.map((product) => (
-        <Card key={product.id}>
-          <ProductImage src={product.image} alt={product.name} />
-          <ProductDetailsContainer>
-            <ProductName>{product.name}</ProductName>
-            <ProductPrice>${product.price}</ProductPrice>
-          </ProductDetailsContainer>
-        </Card>
+        <div
+          key={product.id}
+          className="flex flex-col w-80 shadow-md rounded-lg overflow-hidden border-[0.5px] border-primary-light cursor-pointer hover:opacity-50"
+        >
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-80 h-72 border-b-[0.5px] border-primary-light"
+          />
+          <div className="flex justify-between items-center p-2">
+            <h3 className="uppercase text-2xl font-bold">{product.name}</h3>
+            <p className="text-2xl font-bold border-l-[0.5px] border-primary-light pl-3">
+              ${product.price}
+            </p>
+          </div>
+        </div>
       ))}
-    </Container>
+    </div>
   );
 };
 
 export default Products;
-
-const Container = styled.div`
-  display: flex;
-  gap: 20px;
-  justify-content: space-between;
-  flex-wrap: wrap;
-`;
-
-const ProductImage = styled.img`
-  width: 320px;
-  height: 300px;
-  border-bottom: 1px solid #d1c0a6;
-`;
-
-const Card = styled.div`
-  display: flex;
-  width: 320px;
-  box-shadow: 1px 2px 8px hsl(0deg 0% 0% / 0.25);
-  border-radius: 15px;
-  flex-direction: column;
-  overflow: hidden;
-`;
-
-const ProductDetailsContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ProductName = styled.h3`
-  text-transform: uppercase;
-  font-size: 25px;
-  padding: 0px 10px;
-`;
-
-const ProductPrice = styled.p`
-  font-size: 30px;
-  border-left: 1px solid #d1c0a6;
-  padding: 10px 10px;
-`;

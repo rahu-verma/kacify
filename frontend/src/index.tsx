@@ -1,20 +1,19 @@
 import { createRoot } from "react-dom/client";
-import Nav from "./components/nav";
+import Nav from "./components/navbar";
 import Products from "./components/products";
-import styled from "styled-components";
+import "./index.css";
+import Footer from "./components/footer";
 
 const App = () => {
   return (
-    <Container>
+    <div className="px-5">
       <Nav />
-      <div style={{ height: 20 }} />
+      <div className="h-4" />
       <Products />
-    </Container>
+      <div className="h-4" />
+      <Footer />
+    </div>
   );
 };
-
-const Container = styled.div`
-  padding: 0px 20px;
-`;
 
 createRoot(document.getElementById("root")!).render(<App />);
