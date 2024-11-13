@@ -3,8 +3,9 @@
 
 ## Tech Stack
 - Database - MongoDB
-- Server - NodeJS/ExpressJS
-- Client - ReactJS/NextJS
+- API - NodeJS/ExpressJS
+- Frontend - ReactJS/NextJS/ReduxJS
+
 
 ### Frontend live @ https://kacify-frontend-33ho.onrender.com
 ### API live @ https://kacify-api.onrender.com
