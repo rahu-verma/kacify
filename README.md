@@ -9,3 +9,5 @@
 
 ### Frontend live @ https://kacify-frontend-33ho.onrender.com
 ### API live @ https://kacify-api.onrender.com
+
+#### NOTE: Since its a free service, API takes some time to load.
