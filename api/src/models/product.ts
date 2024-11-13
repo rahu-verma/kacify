@@ -1,12 +1,12 @@
 import { Schema, model } from "mongoose";
-import { ProductType } from "../types/product";
+import { Product } from "../types/product";
 
-const schema = new Schema<ProductType>({
+const schema = new Schema<Product>({
   name: String,
   image: String,
   price: Number,
 });
 
-const ProductModel = model<ProductType>("Product", schema);
+const Product = model<Product>("Product", schema);
 
-export default ProductModel;
+export default Product;

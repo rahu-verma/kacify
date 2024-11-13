@@ -1,11 +1,15 @@
 import { Router } from "express";
-import ProductModel from "../models/product";
+import Product from "../models/product";
 
 const ProductRouter = Router();
 
 ProductRouter.get("/", async (req, res) => {
-  const products = await ProductModel.find({}).select("-__v");
-  res.json(products);
+  const products = await Product.find({}).select("-__v");
+  res.json({
+    success: true,
+    message: "products fetched successfully",
+    data: { products },
+  });
 });
 
 export default ProductRouter;

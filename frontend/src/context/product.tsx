@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { fetchAllProducts } from "../api/product";
-import { ProductType } from "../types/product";
+import { Product } from "../types/product";
 
 type ProductContextType = {
-  products: ProductType[];
+  products: Product[];
   isLoading: boolean;
-}
+};
 
 const ProductContext = createContext<ProductContextType>({
   products: [],
@@ -14,7 +14,7 @@ const ProductContext = createContext<ProductContextType>({
 
 export const ProductProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<ProductType[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     fetchAllProducts()
