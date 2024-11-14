@@ -1,30 +1,51 @@
 import { Router } from "express";
 import User from "../models/user";
+import { sanitizeInputs } from "../utils/common";
+import { validateRegisterInputs } from "../utils/validations";
 
 const UserRouter = Router();
 
-UserRouter.post("/register", async (req, res) => {
-  let { firstName, lastName, email, password } = req.body;
-  firstName = String(firstName);
-  lastName = String(lastName);
-  email = String(email);
-  password = String(password);
+UserRouter.post("/register", async (req, res, next) => {
+  try {
+    let { firstName, lastName, email, password } = req.body;
 
-  const user = new User({ firstName, lastName, email, password });
-  await user.save();
+    validateRegisterInputs(firstName, lastName, email, password);
+    sanitizeInputs({ firstName, lastName, email, password });
 
-  res.json({
-    success: true,
-    message: "user registered successfully",
-    data: {
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
+    const user = new User({ firstName, lastName, email, password });
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "user registered successfully",
+      data: {
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      res.status(400).json({
+        success: false,
+        message: "email already exists",
+        data: {},
+      });
+      return;
+    }
+    if (error.code === 400) {
+      res.status(400).json({
+        success: false,
+        message: "validation failed",
+        data: error.errors,
+      });
+      return;
+    }
+    next(error);
+  }
 });
 
 export default UserRouter;

@@ -1,4 +1,4 @@
-import Skeleton from "react-loading-skeleton";
+import Spinner from "../components/spinner";
 import { useProductContext } from "../context/product";
 
 const Home = () => {
@@ -7,7 +7,9 @@ const Home = () => {
   return (
     <div>
       {isProductContextLoading ? (
-        <Skeleton className="h-[84%]" />
+        <div className="flex justify-center">
+          <Spinner />
+        </div>
       ) : (
         <div className="flex flex-wrap gap-5 justify-between">
           {products?.map((product) => (

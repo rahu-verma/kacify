@@ -1,13 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchAllProducts } from "../api/product";
-import { Product } from "../types/product";
+import { fetchProducts, Product } from "../utils/api";
 
-type ProductContextType = {
+const Context = createContext<{
   products: Product[];
   isLoading: boolean;
-};
-
-const ProductContext = createContext<ProductContextType>({
+}>({
   products: [],
   isLoading: true,
 });
@@ -17,19 +14,19 @@ export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    fetchAllProducts()
+    fetchProducts()
       .then(setProducts)
       .finally(() => setIsLoading(false));
   }, []);
 
   return (
-    <ProductContext.Provider value={{ products, isLoading }}>
+    <Context.Provider value={{ products, isLoading }}>
       {children}
-    </ProductContext.Provider>
+    </Context.Provider>
   );
 };
 
 export const useProductContext = () => {
-  const context = useContext(ProductContext);
+  const context = useContext(Context);
   return context;
 };

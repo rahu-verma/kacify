@@ -8,12 +8,10 @@ import {
 
 type Page = "home" | "user";
 
-type NavigationContextType = {
+const Context = createContext<{
   page: Page;
   setPage: Dispatch<SetStateAction<Page>>;
-};
-
-const NavigationContext = createContext<NavigationContextType>({
+}>({
   page: "home",
   setPage: () => {},
 });
@@ -22,13 +20,11 @@ export const NavigationProvider = ({ children }) => {
   const [page, setPage] = useState<Page>("home");
 
   return (
-    <NavigationContext.Provider value={{ page, setPage }}>
-      {children}
-    </NavigationContext.Provider>
+    <Context.Provider value={{ page, setPage }}>{children}</Context.Provider>
   );
 };
 
 export const useNavigationContext = () => {
-  const context = useContext(NavigationContext);
+  const context = useContext(Context);
   return context;
 };
