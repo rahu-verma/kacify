@@ -1,7 +1,7 @@
 import Spinner from "../components/spinner";
 import { useProductContext } from "../context/product";
 
-const Home = () => {
+const Products = () => {
   const { products, isLoading: isProductContextLoading } = useProductContext();
 
   return (
@@ -36,4 +36,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Products;

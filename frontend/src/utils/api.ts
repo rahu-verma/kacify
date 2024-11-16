@@ -1,4 +1,5 @@
 import axios from "axios";
+import { storeAuthToken } from "./common";
 
 export type Product = {
   _id: string;
@@ -56,11 +57,18 @@ export const registerUser = async (
   email: string,
   password: string
 ) => {
-  const response = await request<{ user: User }>("user/register", "POST", {
-    firstName,
-    lastName,
-    email,
-    password,
-  });
+  const response = await request<{ user: User; authToken: string }>(
+    "user/register",
+    "POST",
+    {
+      firstName,
+      lastName,
+      email,
+      password,
+    }
+  );
+  if (response.success) {
+    storeAuthToken(response.data.authToken);
+  }
   return response;
 };

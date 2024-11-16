@@ -1,4 +1,6 @@
+import { genSaltSync, hash, hashSync } from "bcrypt";
 import { ErrorRequestHandler, RequestHandler } from "express";
+import { decode, sign, verify } from "jsonwebtoken";
 
 export const sanitizeInput = (input: string) => {
   return String(input)
@@ -42,4 +44,22 @@ export const isStrongPassword = (password: string) => {
 
 export const isValidEmail = (email: string) => {
   return /^.+@.+\..+/.test(email);
+};
+
+export const hashPassword = (password: string) => {
+  const salt = genSaltSync(10);
+  return hashSync(password, salt);
+};
+
+export const encodeJwt = (payload: Record<string, string | number>) => {
+  return sign(payload, process.env.JWT_SECRET!, {
+    expiresIn: "7d",
+  });
+};
+
+export const decodeJwt = (token: string) => {
+  if (verify(token, process.env.JWT_SECRET!)) {
+    return decode(token);
+  }
+  return null;
 };

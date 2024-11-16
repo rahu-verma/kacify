@@ -6,18 +6,18 @@ import {
   useState,
 } from "react";
 
-type Page = "home" | "user";
+type Page = "products" | "user" | 'register' | 'login';
 
 const Context = createContext<{
   page: Page;
   setPage: Dispatch<SetStateAction<Page>>;
 }>({
-  page: "home",
+  page: "products",
   setPage: () => {},
 });
 
 export const NavigationProvider = ({ children }) => {
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPage] = useState<Page>("products");
 
   return (
     <Context.Provider value={{ page, setPage }}>{children}</Context.Provider>

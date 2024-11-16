@@ -1,6 +1,6 @@
 import { Router } from "express";
 import User from "../models/user";
-import { sanitizeInputs } from "../utils/common";
+import { encodeJwt, hashPassword, sanitizeInputs } from "../utils/common";
 import { validateRegisterInputs } from "../utils/validations";
 
 const UserRouter = Router();
@@ -12,8 +12,12 @@ UserRouter.post("/register", async (req, res, next) => {
     validateRegisterInputs(firstName, lastName, email, password);
     sanitizeInputs({ firstName, lastName, email, password });
 
+    password = hashPassword(password);
+
     const user = new User({ firstName, lastName, email, password });
     await user.save();
+
+    const authToken = encodeJwt({ _id: user._id });
 
     res.json({
       success: true,
@@ -25,6 +29,7 @@ UserRouter.post("/register", async (req, res, next) => {
           lastName: user.lastName,
           email: user.email,
         },
+        authToken,
       },
     });
   } catch (error) {

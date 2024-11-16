@@ -1,8 +1,10 @@
 import Footer from "./components/footer";
+import Login from "./pages/login";
 import Navbar from "./components/navbar";
+import Products from "./pages/products";
+import Register from "./pages/register";
 import Toast from "./components/toast";
 import { useNavigationContext } from "./context/navigation";
-import Home from "./pages/home";
 import User from "./pages/user";
 
 const App = () => {
@@ -13,7 +15,10 @@ const App = () => {
         <Navbar />
       </div>
       <div className="h-4" />
-      {page === "user" ? <User /> : <Home />}
+      {page === "register" && <Register />}
+      {page === "products" && <Products />}
+      {page === "login" && <Login />}
+      {page === "user" && <User />}
       <div className="h-4" />
       <div className="absolute left-0 bottom-0 w-full">
         <Footer />

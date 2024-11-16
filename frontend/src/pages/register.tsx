@@ -2,11 +2,15 @@ import { useCallback, useState } from "react";
 import { useToastContext } from "../context/toast";
 import { registerUser } from "../utils/api";
 import { validateRegisterFields } from "../utils/validations";
-import { TextButtonFilled } from "./buttons";
-import Input from "./input";
+import { TextButton, TextButtonFilled } from "../components/buttons";
+import Input from "../components/input";
+import { useUserContext } from "../context/user";
+import { useNavigationContext } from "../context/navigation";
 
 const Register = () => {
   const { toastSuccess, toastError } = useToastContext();
+  const { setUser } = useUserContext();
+  const { setPage } = useNavigationContext();
   const [inputs, setInputs] = useState({
     firstName: "",
     lastName: "",
@@ -33,22 +37,21 @@ const Register = () => {
 
       registerUser(firstName, lastName, email, password).then((response) => {
         if (response.success) {
-          toastSuccess(
-            `user registered successfully: ${response.data.user.email}`
-          );
+          toastSuccess(`user registered successfully`);
+          setUser(response.data.user);
+          setPage("user");
         } else {
-          toastError(
-            `user registration failed: ${response.message} - ${JSON.stringify(
-              response.data
-            )}`
-          );
+          toastError(`user registration failed: ${response.message}`);
         }
       });
     } catch {}
   }, [inputs]);
   return (
-    <div>
+    <div className="flex justify-center">
       <div className="mt-6 flex flex-col gap-4 w-96">
+        <span className="self-center py-2 text-3xl uppercase font-bold">
+          Register
+        </span>
         <div className="flex gap-4">
           <Input
             label="First Name"
@@ -95,6 +98,10 @@ const Register = () => {
         </div>
         <div className="mt-2">
           <TextButtonFilled text="Submit" onClick={onSubmit} />
+        </div>
+        <div className="self-center flex items-center gap-2">
+          <span>Already have an account?</span>
+          <TextButton text="Login" onClick={() => setPage("login")}/>
         </div>
       </div>
     </div>
