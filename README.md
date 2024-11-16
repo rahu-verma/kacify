@@ -1,5 +1,5 @@
 # [UNDER DEVELOPMENT]
-# KACIFY - An ecommerce for iphone cases
+# KACIFY - An ecommerce
 
 ## Tech Stack
 - Database - MongoDB
