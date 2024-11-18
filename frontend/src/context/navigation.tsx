@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 
-type Page = "products" | "user" | 'register' | 'login';
+type Page = "products" | "user" | 'register' | 'login' | 'verifyEmail';
 
 const Context = createContext<{
   page: Page;
@@ -17,7 +17,7 @@ const Context = createContext<{
 });
 
 export const NavigationProvider = ({ children }) => {
-  const [page, setPage] = useState<Page>("products");
+  const [page, setPage] = useState<Page>("verifyEmail");
 
   return (
     <Context.Provider value={{ page, setPage }}>{children}</Context.Provider>

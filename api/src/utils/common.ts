@@ -1,25 +1,15 @@
-import { genSaltSync, hash, hashSync } from "bcrypt";
-import { ErrorRequestHandler, RequestHandler } from "express";
+import { genSaltSync, hashSync } from "bcrypt";
+import { RequestHandler } from "express";
 import { decode, sign, verify } from "jsonwebtoken";
 
 export const sanitizeInput = (input: string) => {
   return String(input)
     .trim()
-    .replace(/^[&<>"']/g, "");
+    .replace(/[&<>"']/g, "");
 };
 
-export const sanitizeInputs = (inputs: Record<string, string>) => {
-  for (const key in inputs) {
-    inputs[key] = sanitizeInput(inputs[key]);
-  }
-};
-
-export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
-  res.status(500).json({
-    success: false,
-    message: "internal server error",
-    data: {},
-  });
+export const sanitizeEmail = (email: string) => {
+  return String(email).trim().toLowerCase();
 };
 
 export const versionRoute: RequestHandler = (req, res) => {

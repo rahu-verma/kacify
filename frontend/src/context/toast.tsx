@@ -14,12 +14,14 @@ const Context = createContext<{
   toastSuccess: (message: string) => void;
   toastError: (message: string) => void;
   toastType: ToastType;
+  setShowToast: (show: boolean) => void;
 }>({
   toastMessage: "",
   showToast: false,
   toastSuccess: () => {},
   toastError: () => {},
   toastType: "success",
+  setShowToast: () => {},
 });
 
 export const ToastProvider = ({ children }) => {
@@ -53,7 +55,14 @@ export const ToastProvider = ({ children }) => {
 
   return (
     <Context.Provider
-      value={{ showToast, toastMessage, toastSuccess, toastError, toastType }}
+      value={{
+        showToast,
+        toastMessage,
+        toastSuccess,
+        toastError,
+        toastType,
+        setShowToast,
+      }}
     >
       {children}
     </Context.Provider>

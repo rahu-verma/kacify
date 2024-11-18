@@ -6,6 +6,7 @@ import Register from "./pages/register";
 import Toast from "./components/toast";
 import { useNavigationContext } from "./context/navigation";
 import User from "./pages/user";
+import VerifyEmail from "./pages/verifyEmail";
 
 const App = () => {
   const { page } = useNavigationContext();
@@ -19,6 +20,7 @@ const App = () => {
       {page === "products" && <Products />}
       {page === "login" && <Login />}
       {page === "user" && <User />}
+      {page === "verifyEmail" && <VerifyEmail />}
       <div className="h-4" />
       <div className="absolute left-0 bottom-0 w-full">
         <Footer />

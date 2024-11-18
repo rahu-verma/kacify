@@ -1,14 +1,16 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Document } from "mongoose";
 
-export type User = {
+export interface TUser extends Document {
   _id: string;
   firstName: string;
   lastName: string;
   email: string;
   password: string;
-};
+  emailVerified: boolean;
+  verificationCode: string | null;
+}
 
-const schema = new Schema<User>({
+const schema = new Schema<TUser>({
   firstName: {
     type: String,
     required: true,
@@ -26,9 +28,17 @@ const schema = new Schema<User>({
     type: String,
     required: true,
   },
+  emailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  verificationCode: {
+    type: String,
+    default: null,
+  },
 });
 
-const User = model<User>("User", schema);
+const User = model<TUser>("User", schema);
 
 User.syncIndexes();
 

@@ -1,39 +1,34 @@
 import { useCallback, useState } from "react";
-import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
 import { useUserContext } from "../context/user";
-import { loginUser } from "../utils/api";
-import { isValidEmail } from "../utils/common";
+import { TextButtonFilled } from "../components/buttons";
 
-const Login = () => {
+const VerifyEmail = () => {
   const { toastSuccess, toastError } = useToastContext();
   const { setUser } = useUserContext();
   const { setPage } = useNavigationContext();
   const [inputs, setInputs] = useState({
-    email: "",
-    password: "",
+    verificationCode: "",
   });
   const [errors, setErrors] = useState({
-    email: "",
-    password: "",
+    verificationCode: "",
   });
   const onChangeInput = useCallback(
     (k: string, v: string) => {
       setInputs((p) => ({ ...p, [k]: v }));
       const errors_ = structuredClone(errors);
       errors_[k] = "";
-      if (k === "password" && !v) {
+      if (!v) {
         errors_[k] = `Field is required`;
       }
-      if (k === "email" && !isValidEmail(v)) errors_[k] = "Email is invalid";
       setErrors(errors_);
     },
     [errors, inputs]
   );
   const onSubmit = useCallback(() => {
-    const { email, password } = inputs;
+    const { verificationCode } = inputs;
 
     loginUser(email, password).then((response) => {
       if (response.success) {
@@ -49,26 +44,15 @@ const Login = () => {
     <div className="flex justify-center">
       <div className="mt-6 flex flex-col gap-4 w-96">
         <span className="self-center py-2 text-3xl uppercase font-bold">
-          Login
+          Verify Email
         </span>
         <div className="flex">
           <Input
-            label="Email"
+            label="Verification Code"
             required
-            value={inputs.email}
-            type="email"
-            onChange={(v) => onChangeInput("email", v)}
-            error={errors.email}
-          />
-        </div>
-        <div className={"flex"}>
-          <Input
-            label="Password"
-            required
-            value={inputs.password}
-            type="password"
-            onChange={(v) => onChangeInput("password", v)}
-            error={errors.password}
+            value={inputs.verificationCode}
+            onChange={(v) => onChangeInput("verificationCode", v)}
+            error={errors.verificationCode}
           />
         </div>
         <div className="mt-2">
@@ -81,13 +65,9 @@ const Login = () => {
             }
           />
         </div>
-        <div className="self-center flex items-center gap-2">
-          <span>Don't have an account?</span>
-          <TextButton text="Register" onClick={() => setPage("register")} />
-        </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default VerifyEmail;

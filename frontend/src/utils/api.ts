@@ -72,3 +72,32 @@ export const registerUser = async (
   }
   return response;
 };
+
+export const loginUser = async (email: string, password: string) => {
+  const response = await request<{ user: User; authToken: string }>(
+    "user/login",
+    "POST",
+    {
+      email,
+      password,
+    }
+  );
+  if (response.success) {
+    storeAuthToken(response.data.authToken);
+  }
+  return response;
+};
+
+export const verifyEmail = async (verificationCode: string) => {
+  const response = await request<{ user: User; authToken: string }>(
+    "user/verifyEmail",
+    "POST",
+    {
+      verificationCode,
+    }
+  );
+  if (response.success) {
+    storeAuthToken(response.data.authToken);
+  }
+  return response;
+};
