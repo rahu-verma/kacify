@@ -8,6 +8,7 @@ ProductRouter.get("/", async (req, res) => {
   res.json({
     success: true,
     message: "products fetched successfully",
+    code: "products_fetched",
     data: { products },
   });
 });

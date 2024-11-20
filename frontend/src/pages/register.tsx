@@ -1,11 +1,13 @@
 import { useCallback, useState } from "react";
+import isEmail from "validator/lib/isEmail";
 import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
 import { useUserContext } from "../context/user";
 import { registerUser } from "../utils/api";
-import { isStrongPassword, isValidEmail } from "../utils/common";
+import { isStrongPassword } from "validator";
+import { storeAuthToken } from "../utils/authToken";
 
 const Register = () => {
   const { toastSuccess, toastError } = useToastContext();
@@ -33,7 +35,7 @@ const Register = () => {
       if (!v && !["email", "password", "confirmPassword"].includes(k)) {
         errors_[k] = `Field is required`;
       }
-      if (k === "email" && !isValidEmail(v)) errors_[k] = "Email is invalid";
+      if (k === "email" && !isEmail(v)) errors_[k] = "Email is invalid";
       if (k === "password" && !isStrongPassword(v)) {
         errors_[k] =
           "Password must be at least 8 characters long and " +
@@ -50,10 +52,11 @@ const Register = () => {
   const onSubmit = useCallback(() => {
     const { firstName, lastName, email, password } = inputs;
 
+    setPage("loader");
     registerUser(firstName, lastName, email, password).then((response) => {
       if (response.success) {
         toastSuccess(`user registered successfully`);
-        setUser(response.data.user);
+        storeAuthToken(response.data.authToken);
         setPage("verifyEmail");
       } else {
         toastError(`user registration failed: ${response.message}`);

@@ -1,7 +1,7 @@
 import { TextButton } from "../components/buttons";
 import { useNavigationContext } from "../context/navigation";
 import { useUserContext } from "../context/user";
-import { removeAuthToken } from "../utils/common";
+import { removeAuthToken } from "../utils/authToken";
 
 const User = () => {
   const { setPage } = useNavigationContext();

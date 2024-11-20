@@ -1,5 +1,5 @@
 import axios from "axios";
-import { storeAuthToken } from "./common";
+import { getAuthToken, storeAuthToken } from "./authToken";
 
 export type Product = {
   _id: string;
@@ -20,12 +20,14 @@ type Response<Data> = {
   success: boolean;
   message: string;
   data: Data;
+  code: string;
 };
 
 const request = async <ResponseData>(
   url: string,
   method: "GET" | "POST",
-  data: Record<string, string> = {}
+  data: Record<string, string> = {},
+  headers: Record<string, string> = {}
 ): Promise<Response<ResponseData>> => {
   try {
     const response = await axios.request({
@@ -33,6 +35,7 @@ const request = async <ResponseData>(
       url,
       method,
       data,
+      headers,
     });
     return response.data;
   } catch (error) {
@@ -41,14 +44,24 @@ const request = async <ResponseData>(
         success: false,
         message: "unknown error",
         data: {},
+        code: "unknown_error",
       }
     );
   }
 };
 
+const authRequest = async <ResponseData>(
+  url: string,
+  method: "GET" | "POST",
+  data: Record<string, string> = {}
+): Promise<Response<ResponseData>> => {
+  return await request(url, method, data, {
+    Authorization: getAuthToken(),
+  });
+};
+
 export const fetchProducts = async () => {
-  const response = await request<{ products: Product[] }>("product", "GET");
-  return response.data.products || [];
+  return await request<{ products: Product[] }>("product", "GET");
 };
 
 export const registerUser = async (
@@ -57,47 +70,28 @@ export const registerUser = async (
   email: string,
   password: string
 ) => {
-  const response = await request<{ user: User; authToken: string }>(
-    "user/register",
-    "POST",
-    {
-      firstName,
-      lastName,
-      email,
-      password,
-    }
-  );
-  if (response.success) {
-    storeAuthToken(response.data.authToken);
-  }
-  return response;
+  return await request<{ authToken: string }>("user/register", "POST", {
+    firstName,
+    lastName,
+    email,
+    password,
+  });
 };
 
 export const loginUser = async (email: string, password: string) => {
-  const response = await request<{ user: User; authToken: string }>(
-    "user/login",
-    "POST",
-    {
-      email,
-      password,
-    }
-  );
-  if (response.success) {
-    storeAuthToken(response.data.authToken);
-  }
-  return response;
+  return await request<{ authToken: string }>("user/login", "POST", {
+    email,
+    password,
+  });
 };
 
-export const verifyEmail = async (verificationCode: string) => {
-  const response = await request<{ user: User; authToken: string }>(
-    "user/verifyEmail",
-    "POST",
-    {
-      verificationCode,
-    }
-  );
-  if (response.success) {
-    storeAuthToken(response.data.authToken);
-  }
-  return response;
+export const verifyEmail = async (email: string, verificationCode: string) => {
+  return await request<{ authToken: string }>("user/verifyEmail", "POST", {
+    email,
+    verificationCode,
+  });
+};
+
+export const getUserProfile = async () => {
+  return await authRequest<{ user: User }>("user/profile", "GET");
 };

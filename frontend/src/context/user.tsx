@@ -3,33 +3,49 @@ import {
   Dispatch,
   SetStateAction,
   useContext,
+  useEffect,
   useState,
 } from "react";
-import { User } from "../utils/api";
-
-export type Page = "register" | "login" | "user";
+import { getUserProfile, User } from "../utils/api";
+import { useToastContext } from "./toast";
+import { useNavigationContext } from "./navigation";
+import { getAuthToken } from "../utils/authToken";
 
 const Context = createContext<{
   user?: User;
-  page: Page;
   isLoading: boolean;
-  setPage: Dispatch<SetStateAction<Page>>;
   setUser?: Dispatch<SetStateAction<User>>;
 }>({
   user: undefined,
-  page: "register",
   isLoading: false,
-  setPage: () => {},
   setUser: () => {},
 });
 
 export const UserProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState<Page>("register");
   const [user, setUser] = useState<User>();
+  const { toastError } = useToastContext();
+  const { page, setPage } = useNavigationContext();
+
+  useEffect(() => {
+    if (getAuthToken()) {
+      setIsLoading(true);
+      getUserProfile()
+        .then((response) => setUser(response.data.user))
+        .finally(() => setIsLoading(false))
+        .catch((error) => {
+          if (error.message === "email_not_verified") {
+            setPage("verifyEmail");
+          } else {
+            setPage("login");
+          }
+          toastError(`failed to get user profile: ${error.message}`);
+        });
+    }
+  }, [page]);
 
   return (
-    <Context.Provider value={{ page, setPage, isLoading, user, setUser }}>
+    <Context.Provider value={{ isLoading, user, setUser }}>
       {children}
     </Context.Provider>
   );

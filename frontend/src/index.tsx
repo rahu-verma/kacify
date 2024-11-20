@@ -9,13 +9,13 @@ import { ToastProvider } from "./context/toast";
 const root = createRoot(document.getElementById("root")!);
 
 root.render(
-  <NavigationProvider>
-    <ProductProvider>
-      <UserProvider>
-        <ToastProvider>
+  <ToastProvider>
+    <NavigationProvider>
+      <ProductProvider>
+        <UserProvider>
           <App />
-        </ToastProvider>
-      </UserProvider>
-    </ProductProvider>
-  </NavigationProvider>
+        </UserProvider>
+      </ProductProvider>
+    </NavigationProvider>
+  </ToastProvider>
 );

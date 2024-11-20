@@ -8,6 +8,7 @@ export interface TUser extends Document {
   password: string;
   emailVerified: boolean;
   verificationCode: string | null;
+  verifyEmail: () => Promise<void>;
 }
 
 const schema = new Schema<TUser>({
@@ -37,6 +38,20 @@ const schema = new Schema<TUser>({
     default: null,
   },
 });
+
+schema.methods.toJSON = function () {
+  return {
+    id: this._id,
+    fullName: `${this.firstName} ${this.lastName}`,
+    email: this.email,
+  };
+};
+
+schema.methods.verifyEmail = async function () {
+  this.emailVerified = true;
+  this.verificationCode = null;
+  await this.save();
+};
 
 const User = model<TUser>("User", schema);
 

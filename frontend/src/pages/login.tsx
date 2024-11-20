@@ -3,13 +3,11 @@ import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
-import { useUserContext } from "../context/user";
 import { loginUser } from "../utils/api";
-import { isValidEmail } from "../utils/common";
+import { storeAuthToken } from "../utils/authToken";
 
 const Login = () => {
   const { toastSuccess, toastError } = useToastContext();
-  const { setUser } = useUserContext();
   const { setPage } = useNavigationContext();
   const [inputs, setInputs] = useState({
     email: "",
@@ -24,10 +22,9 @@ const Login = () => {
       setInputs((p) => ({ ...p, [k]: v }));
       const errors_ = structuredClone(errors);
       errors_[k] = "";
-      if (k === "password" && !v) {
+      if (!v) {
         errors_[k] = `Field is required`;
       }
-      if (k === "email" && !isValidEmail(v)) errors_[k] = "Email is invalid";
       setErrors(errors_);
     },
     [errors, inputs]
@@ -35,12 +32,16 @@ const Login = () => {
   const onSubmit = useCallback(() => {
     const { email, password } = inputs;
 
+    setPage("loader");
     loginUser(email, password).then((response) => {
       if (response.success) {
         toastSuccess(`user login successfully`);
-        setUser(response.data.user);
-        setPage("user");
+        storeAuthToken(response.data.authToken);
+        setPage("profile");
       } else {
+        if (response.code === "email_not_verified") {
+          setPage("verifyEmail");
+        }
         toastError(`user login failed: ${response.message}`);
       }
     });

@@ -1,5 +1,5 @@
 import { useNavigationContext } from "../context/navigation";
-import { getAccountPage } from "../utils/common";
+import { getAccountPage } from "../utils/authToken";
 import { TextButton } from "./buttons";
 
 const Navbar = () => {
@@ -25,7 +25,7 @@ const Navbar = () => {
         <TextButton
           text="Account"
           onClick={() => setPage(getAccountPage())}
-          className={page === "user" && "[&&]:text-primary-dark"}
+          className={page === getAccountPage() && "[&&]:text-primary-dark"}
         />
       </div>
     </div>

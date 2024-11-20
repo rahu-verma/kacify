@@ -1,18 +1,20 @@
 import { useCallback, useState } from "react";
+import { TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
-import { useUserContext } from "../context/user";
-import { TextButtonFilled } from "../components/buttons";
+import { verifyEmail } from "../utils/api";
+import { storeAuthToken } from "../utils/authToken";
 
 const VerifyEmail = () => {
   const { toastSuccess, toastError } = useToastContext();
-  const { setUser } = useUserContext();
   const { setPage } = useNavigationContext();
   const [inputs, setInputs] = useState({
+    email: "",
     verificationCode: "",
   });
   const [errors, setErrors] = useState({
+    email: "",
     verificationCode: "",
   });
   const onChangeInput = useCallback(
@@ -28,15 +30,16 @@ const VerifyEmail = () => {
     [errors, inputs]
   );
   const onSubmit = useCallback(() => {
-    const { verificationCode } = inputs;
+    const { email, verificationCode } = inputs;
 
-    loginUser(email, password).then((response) => {
+    setPage("loader");
+    verifyEmail(email, verificationCode).then((response) => {
       if (response.success) {
-        toastSuccess(`user login successfully`);
-        setUser(response.data.user);
-        setPage("user");
+        toastSuccess(`email verified successfully`);
+        storeAuthToken(response.data.authToken);
+        setPage("profile");
       } else {
-        toastError(`user login failed: ${response.message}`);
+        toastError(`email verification failed: ${response.message}`);
       }
     });
   }, [inputs]);
@@ -46,6 +49,15 @@ const VerifyEmail = () => {
         <span className="self-center py-2 text-3xl uppercase font-bold">
           Verify Email
         </span>
+        <div className="flex">
+          <Input
+            label="Email"
+            required
+            value={inputs.email}
+            onChange={(v) => onChangeInput("email", v)}
+            error={errors.email}
+          />
+        </div>
         <div className="flex">
           <Input
             label="Verification Code"
