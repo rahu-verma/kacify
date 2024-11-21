@@ -5,10 +5,12 @@ import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
 import { verifyEmail } from "../utils/api";
 import { storeAuthToken } from "../utils/authToken";
+import { useLoaderContext } from "../context/loader";
 
 const VerifyEmail = () => {
   const { toastSuccess, toastError } = useToastContext();
   const { setPage } = useNavigationContext();
+  const { setShowLoader } = useLoaderContext();
   const [inputs, setInputs] = useState({
     email: "",
     verificationCode: "",
@@ -32,16 +34,20 @@ const VerifyEmail = () => {
   const onSubmit = useCallback(() => {
     const { email, verificationCode } = inputs;
 
-    setPage("loader");
-    verifyEmail(email, verificationCode).then((response) => {
-      if (response.success) {
-        toastSuccess(`email verified successfully`);
-        storeAuthToken(response.data.authToken);
-        setPage("profile");
-      } else {
-        toastError(`email verification failed: ${response.message}`);
-      }
-    });
+    setShowLoader(true);
+    verifyEmail(email, verificationCode)
+      .then((response) => {
+        if (response.success) {
+          toastSuccess(`email verified successfully`);
+          storeAuthToken(response.data.authToken);
+          setPage("profile");
+        } else {
+          toastError(`email verification failed: ${response.message}`);
+        }
+      })
+      .finally(() => {
+        setShowLoader(false);
+      });
   }, [inputs]);
   return (
     <div className="flex justify-center">

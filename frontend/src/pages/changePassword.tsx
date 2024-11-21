@@ -1,51 +1,63 @@
 import { useCallback, useState } from "react";
-import { TextButton, TextButtonFilled } from "../components/buttons";
+import { TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
-import { loginUser } from "../utils/api";
+import { changePassword, verifyEmail } from "../utils/api";
 import { storeAuthToken } from "../utils/authToken";
 import { useLoaderContext } from "../context/loader";
+import { isStrongPassword } from "validator";
 
-const Login = () => {
+const ChangePassword = () => {
   const { toastSuccess, toastError } = useToastContext();
   const { setPage } = useNavigationContext();
   const { setShowLoader } = useLoaderContext();
   const [inputs, setInputs] = useState({
     email: "",
+    verificationCode: "",
     password: "",
+    confirmPassword: "",
   });
   const [errors, setErrors] = useState({
     email: "",
+    verificationCode: "",
     password: "",
+    confirmPassword: "",
   });
   const onChangeInput = useCallback(
-    (k: string, v: string) => {
+    (
+      k: "email" | "verificationCode" | "password" | "confirmPassword",
+      v: string
+    ) => {
       setInputs((p) => ({ ...p, [k]: v }));
       const errors_ = structuredClone(errors);
       errors_[k] = "";
       if (!v) {
         errors_[k] = `Field is required`;
       }
+      if (k === "password" && !isStrongPassword(v)) {
+        errors_[k] =
+          "Password must be at least 8 characters long and " +
+          "contain at least one uppercase letter, one lowercase letter, " +
+          "one number, and one special character";
+      }
+      if (k === "confirmPassword" && v !== inputs.password) {
+        errors_[k] = "Passwords do not match";
+      }
       setErrors(errors_);
     },
     [errors, inputs]
   );
   const onSubmit = useCallback(() => {
-    const { email, password } = inputs;
-
+    const { email, verificationCode, password } = inputs;
     setShowLoader(true);
-    loginUser(email, password)
+    changePassword(email, verificationCode, password)
       .then((response) => {
         if (response.success) {
-          toastSuccess(`user login successfully`);
-          storeAuthToken(response.data.authToken);
-          setPage("profile");
+          toastSuccess(`password changed successfully`);
+          setPage("login");
         } else {
-          if (response.code === "email_not_verified") {
-            setPage("verifyEmail");
-          }
-          toastError(`user login failed: ${response.message}`);
+          toastError(`password change failed: ${response.message}`);
         }
       })
       .finally(() => {
@@ -56,26 +68,45 @@ const Login = () => {
     <div className="flex justify-center">
       <div className="mt-6 flex flex-col gap-4 w-96">
         <span className="self-center py-2 text-3xl uppercase font-bold">
-          Login
+          Verify Email
         </span>
         <div className="flex">
           <Input
             label="Email"
             required
             value={inputs.email}
-            type="email"
             onChange={(v) => onChangeInput("email", v)}
             error={errors.email}
           />
         </div>
-        <div className={"flex"}>
+        <div className="flex">
+          <Input
+            label="Verification Code"
+            required
+            value={inputs.verificationCode}
+            onChange={(v) => onChangeInput("verificationCode", v)}
+            error={errors.verificationCode}
+            type="number"
+          />
+        </div>
+        <div className="flex">
           <Input
             label="Password"
             required
             value={inputs.password}
-            type="password"
             onChange={(v) => onChangeInput("password", v)}
             error={errors.password}
+            type="password"
+          />
+        </div>
+        <div className="flex">
+          <Input
+            label="Confirm Password"
+            required
+            value={inputs.confirmPassword}
+            onChange={(v) => onChangeInput("confirmPassword", v)}
+            error={errors.confirmPassword}
+            type="password"
           />
         </div>
         <div className="mt-2">
@@ -88,20 +119,9 @@ const Login = () => {
             }
           />
         </div>
-        <div className="self-center flex items-center gap-2">
-          <span>Don't have an account?</span>
-          <TextButton text="Register" onClick={() => setPage("register")} />
-        </div>
-        <div className="self-center flex items-center gap-2">
-          <TextButton
-            text="Forgot Password?"
-            onClick={() => setPage("forgotPassword")}
-            className="text-sm"
-          />
-        </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default ChangePassword;

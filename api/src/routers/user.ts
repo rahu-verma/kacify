@@ -1,17 +1,27 @@
 import { compareSync } from "bcrypt";
 import { Router } from "express";
 import { authVerification } from "../middlewares/auth";
-import { LoginRequest, loginValidation } from "../middlewares/login";
+import User from "../models/user";
+import { sendForgotPasswordEmail, sendVerificationEmail } from "../utils/email";
+import { encodeJwt } from "../utils/jwt";
+import { createUser } from "../utils/mongoose";
+
+import { z } from "zod";
 import { RegisterRequest, registerValidation } from "../middlewares/register";
+import { LoginRequest, loginValidation } from "../middlewares/login";
 import {
   VerifyEmailRequest,
   verifyEmailValidation,
 } from "../middlewares/verifyEmail";
-import User from "../models/user";
-import { sendVerificationEmail } from "../utils/email";
-import { encodeJwt } from "../utils/jwt";
-import { createUser } from "../utils/mongoose";
-import { TRequest } from "../utils/types";
+import { UserRequest } from "../utils/types";
+import {
+  ForgotPasswordRequest,
+  forgotPasswordValidation,
+} from "../middlewares/forgotPassword";
+import {
+  ChangePasswordRequest,
+  changePasswordValidation,
+} from "../middlewares/changePassword";
 
 const UserRouter = Router();
 
@@ -154,7 +164,7 @@ UserRouter.post(
 UserRouter.get(
   "/profile",
   authVerification,
-  async (req: TRequest, res, next) => {
+  async (req: UserRequest, res, next) => {
     try {
       if (!req.user.emailVerified) {
         res.status(400).json({
@@ -172,6 +182,79 @@ UserRouter.get(
         data: {
           user: req.user,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.post(
+  "/forgotPassword",
+  forgotPasswordValidation,
+  async (req: ForgotPasswordRequest, res, next) => {
+    try {
+      const { email } = req.body;
+
+      const user = await User.findOne({ email });
+      if (!user) {
+        res.status(400).json({
+          success: false,
+          code: "email_not_found",
+          message: "email not found",
+          data: {},
+        });
+        return;
+      }
+
+      await user.setForgotPasswordVerificationCode();
+      await sendForgotPasswordEmail(email, user.forgotPasswordVerificationCode);
+
+      res.json({
+        success: true,
+        message: "forgot password verification code sent successfully",
+        data: {},
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.post(
+  "/changePassword",
+  changePasswordValidation,
+  async (req: ChangePasswordRequest, res, next) => {
+    try {
+      const { email, verificationCode, password } = req.body;
+
+      const user = await User.findOne({ email });
+      if (!user) {
+        res.status(400).json({
+          success: false,
+          code: "email_not_found",
+          message: "email not found",
+          data: {},
+        });
+        return;
+      }
+
+      if (verificationCode !== user.forgotPasswordVerificationCode) {
+        res.status(400).json({
+          success: false,
+          code: "invalid_verification_code",
+          message: "invalid verification code",
+          data: {},
+        });
+        return;
+      }
+
+      await user.changePassword(password);
+
+      res.json({
+        success: true,
+        message: "password changed successfully",
+        data: {},
       });
     } catch (error) {
       next(error);

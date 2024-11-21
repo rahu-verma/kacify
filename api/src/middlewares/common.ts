@@ -1,4 +1,7 @@
-import { ErrorRequestHandler, RequestHandler } from "express";
+import {
+  ErrorRequestHandler,
+  RequestHandler
+} from "express";
 import { sendErrorEmail } from "../utils/email";
 import { logError } from "../utils/logger";
 
@@ -24,7 +27,7 @@ export const errorHandler: ErrorRequestHandler = async (
 export const notFoundHandler: RequestHandler = (req, res, next) => {
   res.status(404).json({
     success: false,
-    message: "not found",
+    message: "route not found",
     data: {},
   });
 };

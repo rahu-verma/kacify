@@ -12,7 +12,8 @@ type Page =
   | "register"
   | "login"
   | "verifyEmail"
-  | "loader";
+  | "forgotPassword"
+  | "changePassword";
 
 const Context = createContext<{
   page: Page;
@@ -23,7 +24,7 @@ const Context = createContext<{
 });
 
 export const NavigationProvider = ({ children }) => {
-  const [page, setPage] = useState<Page>("loader");
+  const [page, setPage] = useState<Page>("products");
 
   return (
     <Context.Provider value={{ page, setPage }}>{children}</Context.Provider>

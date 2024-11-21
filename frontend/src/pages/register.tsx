@@ -8,10 +8,11 @@ import { useUserContext } from "../context/user";
 import { registerUser } from "../utils/api";
 import { isStrongPassword } from "validator";
 import { storeAuthToken } from "../utils/authToken";
+import { useLoaderContext } from "../context/loader";
 
 const Register = () => {
   const { toastSuccess, toastError } = useToastContext();
-  const { setUser } = useUserContext();
+  const { setShowLoader } = useLoaderContext();
   const { setPage } = useNavigationContext();
   const [inputs, setInputs] = useState({
     firstName: "",
@@ -52,16 +53,20 @@ const Register = () => {
   const onSubmit = useCallback(() => {
     const { firstName, lastName, email, password } = inputs;
 
-    setPage("loader");
-    registerUser(firstName, lastName, email, password).then((response) => {
-      if (response.success) {
-        toastSuccess(`user registered successfully`);
-        storeAuthToken(response.data.authToken);
-        setPage("verifyEmail");
-      } else {
-        toastError(`user registration failed: ${response.message}`);
-      }
-    });
+    setShowLoader(true);
+    registerUser(firstName, lastName, email, password)
+      .then((response) => {
+        if (response.success) {
+          toastSuccess(`user registered successfully`);
+          storeAuthToken(response.data.authToken);
+          setPage("verifyEmail");
+        } else {
+          toastError(`user registration failed: ${response.message}`);
+        }
+      })
+      .finally(() => {
+        setShowLoader(false);
+      });
   }, [inputs]);
   return (
     <div className="flex justify-center">

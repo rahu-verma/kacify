@@ -5,17 +5,20 @@ import { ProductProvider } from "./context/product";
 import { UserProvider } from "./context/user";
 import "./index.css";
 import { ToastProvider } from "./context/toast";
+import { LoaderProvider } from "./context/loader";
 
 const root = createRoot(document.getElementById("root")!);
 
 root.render(
   <ToastProvider>
-    <NavigationProvider>
-      <ProductProvider>
-        <UserProvider>
-          <App />
-        </UserProvider>
-      </ProductProvider>
-    </NavigationProvider>
+    <LoaderProvider>
+      <NavigationProvider>
+        <ProductProvider>
+          <UserProvider>
+            <App />
+          </UserProvider>
+        </ProductProvider>
+      </NavigationProvider>
+    </LoaderProvider>
   </ToastProvider>
 );

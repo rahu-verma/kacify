@@ -16,7 +16,7 @@ const Input = ({
   value: string;
   onChange: (v: string) => void;
   required?: boolean;
-  type?: string;
+  type?: "number" | "password" | "text" | "email";
   error?: string;
   onBlur?: () => void;
 }) => {
@@ -27,7 +27,7 @@ const Input = ({
       <span>
         {label}
         {required && "*"}
-      </span> 
+      </span>
       <div className="flex items-center relative">
         <input
           type={type}

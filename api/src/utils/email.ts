@@ -39,3 +39,14 @@ export const sendErrorEmail = async (error: Error) => {
     })
   );
 };
+
+export const sendForgotPasswordEmail = async (
+  to: string,
+  verificationCode: string
+) => {
+  await sendEmail(
+    to,
+    "Kacify forgot password verification",
+    `Your verification code is: ${verificationCode}`
+  );
+};

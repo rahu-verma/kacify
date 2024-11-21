@@ -95,3 +95,21 @@ export const verifyEmail = async (email: string, verificationCode: string) => {
 export const getUserProfile = async () => {
   return await authRequest<{ user: User }>("user/profile", "GET");
 };
+
+export const forgotPassword = async (email: string) => {
+  return await request<{}>("user/forgotPassword", "POST", {
+    email,
+  });
+};
+
+export const changePassword = async (
+  email: string,
+  verificationCode: string,
+  password: string
+) => {
+  return await request<{}>("user/changePassword", "POST", {
+    email,
+    verificationCode,
+    password,
+  });
+};

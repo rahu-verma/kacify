@@ -1,4 +1,5 @@
 import { Schema, model, Document } from "mongoose";
+import { hashPassword } from "../utils/bcrypt";
 
 export interface TUser extends Document {
   _id: string;
@@ -9,6 +10,10 @@ export interface TUser extends Document {
   emailVerified: boolean;
   verificationCode: string | null;
   verifyEmail: () => Promise<void>;
+  forgotPasswordVerificationCode: string | null;
+  setForgotPasswordVerificationCode: () => Promise<void>;
+  clearForgotPasswordVerificationCode: () => Promise<void>;
+  changePassword: (password: string) => Promise<void>;
 }
 
 const schema = new Schema<TUser>({
@@ -37,6 +42,10 @@ const schema = new Schema<TUser>({
     type: String,
     default: null,
   },
+  forgotPasswordVerificationCode: {
+    type: String,
+    default: null,
+  },
 });
 
 schema.methods.toJSON = function () {
@@ -50,6 +59,23 @@ schema.methods.toJSON = function () {
 schema.methods.verifyEmail = async function () {
   this.emailVerified = true;
   this.verificationCode = null;
+  await this.save();
+};
+
+schema.methods.setForgotPasswordVerificationCode = async function () {
+  this.forgotPasswordVerificationCode = Math.floor(
+    100000 + Math.random() * 900000
+  ).toString();
+  await this.save();
+};
+
+schema.methods.clearForgotPasswordVerificationCode = async function () {
+  this.forgotPasswordVerificationCode = null;
+  await this.save();
+};
+
+schema.methods.changePassword = async function (password: string) {
+  this.password = hashPassword(password);
   await this.save();
 };
 

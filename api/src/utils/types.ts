@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { TUser } from "../models/user";
 
-export interface TRequest extends Request {
+export interface UserRequest extends Request {
   user: TUser;
 }

@@ -8,9 +8,13 @@ import { useNavigationContext } from "./context/navigation";
 import User from "./pages/profile";
 import VerifyEmail from "./pages/verifyEmail";
 import Loader from "./pages/loader";
+import ForgotPassword from "./pages/forgotPassword";
+import { useLoaderContext } from "./context/loader";
+import ChangePassword from "./pages/changePassword";
 
 const App = () => {
   const { page } = useNavigationContext();
+  const { showLoader } = useLoaderContext();
   return (
     <div className="px-5 min-h-screen relative pt-14">
       <div className="fixed left-0 top-0 w-full px-5 border-b-[0.5px] border-primary-light">
@@ -22,7 +26,13 @@ const App = () => {
       {page === "login" && <Login />}
       {page === "profile" && <User />}
       {page === "verifyEmail" && <VerifyEmail />}
-      {page === "loader" && <Loader />}
+      {page === "forgotPassword" && <ForgotPassword />}
+      {page === "changePassword" && <ChangePassword />}
+      {showLoader && (
+        <div className="absolute h-screen w-full top-0 flex items-center justify-center z-50 bg-white opacity-50">
+          <Loader />
+        </div>
+      )}
       <div className="h-4" />
       <div className="absolute left-0 bottom-0 w-full">
         <Footer />

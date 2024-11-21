@@ -1,13 +1,16 @@
-import { RequestHandler } from "express";
-import { decodeJwt } from "../utils/jwt";
-import User from "../models/user";
-import { TRequest } from "../utils/types";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 import { JwtPayload } from "jsonwebtoken";
+import User, { TUser } from "../models/user";
+import { decodeJwt } from "../utils/jwt";
 
-export const authVerification: RequestHandler = async (
+interface TRequest extends Request {
+  user: TUser;
+}
+
+export const authVerification = async (
   req: TRequest,
-  res,
-  next
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const authToken = req.headers.authorization;
