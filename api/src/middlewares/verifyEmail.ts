@@ -2,8 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 
 const VerifyEmailRequestBody = z.object({
-  email: z.string({ message: "Email is required" }),
-  verificationCode: z.string({ message: "Verification code is required" }),
+  email: z.string().email({ message: "Email is invalid" }),
+  verificationCode: z.number({ message: "Verification code is required" }),
 });
 
 export interface VerifyEmailRequest extends Request {

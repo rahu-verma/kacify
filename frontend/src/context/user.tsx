@@ -15,10 +15,14 @@ const Context = createContext<{
   user?: User;
   isLoading: boolean;
   setUser?: Dispatch<SetStateAction<User>>;
+  emailToVerify?: string;
+  setEmailToVerify?: Dispatch<SetStateAction<string>>;
 }>({
   user: undefined,
   isLoading: false,
   setUser: () => {},
+  emailToVerify: "",
+  setEmailToVerify: () => {},
 });
 
 export const UserProvider = ({ children }) => {
@@ -26,26 +30,26 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState<User>();
   const { toastError } = useToastContext();
   const { page, setPage } = useNavigationContext();
+  const [emailToVerify, setEmailToVerify] = useState<string>();
 
   useEffect(() => {
-    if (getAuthToken()) {
+    if (getAuthToken() && page === "profile") {
       setIsLoading(true);
-      getUserProfile()
-        .then((response) => setUser(response.data.user))
-        .finally(() => setIsLoading(false))
-        .catch((error) => {
-          if (error.message === "email_not_verified") {
-            setPage("verifyEmail");
-          } else {
-            setPage("login");
-          }
-          toastError(`failed to get user profile: ${error.message}`);
-        });
+      getUserProfile().then((response) => {
+        if (response.success) {
+          setUser(response.data.user);
+        } else {
+          toastError(`failed to get user profile: ${response.message}`);
+        }
+        setIsLoading(false);
+      });
     }
   }, [page]);
 
   return (
-    <Context.Provider value={{ isLoading, user, setUser }}>
+    <Context.Provider
+      value={{ isLoading, user, setUser, emailToVerify, setEmailToVerify }}
+    >
       {children}
     </Context.Provider>
   );

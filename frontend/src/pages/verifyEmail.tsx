@@ -1,46 +1,48 @@
 import { useCallback, useState } from "react";
-import { TextButtonFilled } from "../components/buttons";
+import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
 import { verifyEmail } from "../utils/api";
 import { storeAuthToken } from "../utils/authToken";
 import { useLoaderContext } from "../context/loader";
+import { useUserContext } from "../context/user";
 
 const VerifyEmail = () => {
   const { toastSuccess, toastError } = useToastContext();
   const { setPage } = useNavigationContext();
   const { setShowLoader } = useLoaderContext();
+  const { emailToVerify } = useUserContext();
   const [inputs, setInputs] = useState({
-    email: "",
     verificationCode: "",
   });
   const [errors, setErrors] = useState({
-    email: "",
     verificationCode: "",
   });
   const onChangeInput = useCallback(
-    (k: string, v: string) => {
+    (k: "verificationCode", v: string) => {
       setInputs((p) => ({ ...p, [k]: v }));
       const errors_ = structuredClone(errors);
       errors_[k] = "";
       if (!v) {
         errors_[k] = `Field is required`;
       }
+      if (k === "verificationCode" && isNaN(Number(v))) {
+        errors_[k] = "Verification code must be a number";
+      }
       setErrors(errors_);
     },
     [errors, inputs]
   );
   const onSubmit = useCallback(() => {
-    const { email, verificationCode } = inputs;
+    const { verificationCode } = inputs;
 
     setShowLoader(true);
-    verifyEmail(email, verificationCode)
+    verifyEmail(emailToVerify, Number(verificationCode))
       .then((response) => {
         if (response.success) {
           toastSuccess(`email verified successfully`);
-          storeAuthToken(response.data.authToken);
-          setPage("profile");
+          setPage("login");
         } else {
           toastError(`email verification failed: ${response.message}`);
         }
@@ -52,18 +54,9 @@ const VerifyEmail = () => {
   return (
     <div className="flex justify-center">
       <div className="mt-6 flex flex-col gap-4 w-96">
-        <span className="self-center py-2 text-3xl uppercase font-bold">
-          Verify Email
+        <span className="self-center py-2 text-xl uppercase font-bold">
+          Verify Email or Phone Number
         </span>
-        <div className="flex">
-          <Input
-            label="Email"
-            required
-            value={inputs.email}
-            onChange={(v) => onChangeInput("email", v)}
-            error={errors.email}
-          />
-        </div>
         <div className="flex">
           <Input
             label="Verification Code"
@@ -82,6 +75,10 @@ const VerifyEmail = () => {
               Object.values(errors).some((v) => v)
             }
           />
+        </div>
+        <div className="self-center flex items-center gap-2">
+          <span>Back to</span>
+          <TextButton text="Login" onClick={() => setPage("login")} />
         </div>
       </div>
     </div>

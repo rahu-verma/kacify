@@ -26,7 +26,7 @@ type Response<Data> = {
 const request = async <ResponseData>(
   url: string,
   method: "GET" | "POST",
-  data: Record<string, string> = {},
+  data: Record<string, string | number> = {},
   headers: Record<string, string> = {}
 ): Promise<Response<ResponseData>> => {
   try {
@@ -68,13 +68,15 @@ export const registerUser = async (
   firstName: string,
   lastName: string,
   email: string,
-  password: string
+  password: string,
+  phoneNumber: string
 ) => {
-  return await request<{ authToken: string }>("user/register", "POST", {
+  return await request<{}>("user/register", "POST", {
     firstName,
     lastName,
     email,
     password,
+    phoneNumber,
   });
 };
 
@@ -85,8 +87,8 @@ export const loginUser = async (email: string, password: string) => {
   });
 };
 
-export const verifyEmail = async (email: string, verificationCode: string) => {
-  return await request<{ authToken: string }>("user/verifyEmail", "POST", {
+export const verifyEmail = async (email: string, verificationCode: number) => {
+  return await request<{}>("user/verifyEmail", "POST", {
     email,
     verificationCode,
   });
@@ -104,7 +106,7 @@ export const forgotPassword = async (email: string) => {
 
 export const changePassword = async (
   email: string,
-  verificationCode: string,
+  verificationCode: number,
   password: string
 ) => {
   return await request<{}>("user/changePassword", "POST", {

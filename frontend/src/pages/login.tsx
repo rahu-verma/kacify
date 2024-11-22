@@ -66,6 +66,7 @@ const Login = () => {
             type="email"
             onChange={(v) => onChangeInput("email", v)}
             error={errors.email}
+            name="email"
           />
         </div>
         <div className={"flex"}>
@@ -76,6 +77,7 @@ const Login = () => {
             type="password"
             onChange={(v) => onChangeInput("password", v)}
             error={errors.password}
+            name="password"
           />
         </div>
         <div className="mt-2">

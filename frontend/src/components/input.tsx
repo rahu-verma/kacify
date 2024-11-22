@@ -11,6 +11,7 @@ const Input = ({
   type: typeProp,
   error,
   onBlur,
+  name,
 }: {
   label: string;
   value: string;
@@ -19,6 +20,7 @@ const Input = ({
   type?: "number" | "password" | "text" | "email";
   error?: string;
   onBlur?: () => void;
+  name?: string;
 }) => {
   const [type, setType] = useState(typeProp);
   const [showPassword, setShowPassword] = useState(false);
@@ -35,6 +37,7 @@ const Input = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
+          name={name}
         />
         {typeProp === "password" &&
           (showPassword ? (

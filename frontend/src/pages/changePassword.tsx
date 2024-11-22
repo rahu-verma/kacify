@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { TextButtonFilled } from "../components/buttons";
+import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
@@ -7,23 +7,23 @@ import { changePassword, verifyEmail } from "../utils/api";
 import { storeAuthToken } from "../utils/authToken";
 import { useLoaderContext } from "../context/loader";
 import { isStrongPassword } from "validator";
+import { useUserContext } from "../context/user";
 
 const ChangePassword = () => {
   const { toastSuccess, toastError } = useToastContext();
   const { setPage } = useNavigationContext();
   const { setShowLoader } = useLoaderContext();
   const [inputs, setInputs] = useState({
-    email: "",
     verificationCode: "",
     password: "",
     confirmPassword: "",
   });
   const [errors, setErrors] = useState({
-    email: "",
     verificationCode: "",
     password: "",
     confirmPassword: "",
   });
+  const { emailToVerify } = useUserContext();
   const onChangeInput = useCallback(
     (
       k: "email" | "verificationCode" | "password" | "confirmPassword",
@@ -44,14 +44,17 @@ const ChangePassword = () => {
       if (k === "confirmPassword" && v !== inputs.password) {
         errors_[k] = "Passwords do not match";
       }
+      if (k === "verificationCode" && isNaN(Number(v))) {
+        errors_[k] = "Verification code must be a number";
+      }
       setErrors(errors_);
     },
     [errors, inputs]
   );
   const onSubmit = useCallback(() => {
-    const { email, verificationCode, password } = inputs;
+    const { verificationCode, password } = inputs;
     setShowLoader(true);
-    changePassword(email, verificationCode, password)
+    changePassword(emailToVerify, Number(verificationCode), password)
       .then((response) => {
         if (response.success) {
           toastSuccess(`password changed successfully`);
@@ -72,21 +75,13 @@ const ChangePassword = () => {
         </span>
         <div className="flex">
           <Input
-            label="Email"
-            required
-            value={inputs.email}
-            onChange={(v) => onChangeInput("email", v)}
-            error={errors.email}
-          />
-        </div>
-        <div className="flex">
-          <Input
             label="Verification Code"
             required
             value={inputs.verificationCode}
             onChange={(v) => onChangeInput("verificationCode", v)}
             error={errors.verificationCode}
             type="number"
+            name="verificationCode"
           />
         </div>
         <div className="flex">
@@ -97,6 +92,7 @@ const ChangePassword = () => {
             onChange={(v) => onChangeInput("password", v)}
             error={errors.password}
             type="password"
+            name="password"
           />
         </div>
         <div className="flex">
@@ -107,6 +103,7 @@ const ChangePassword = () => {
             onChange={(v) => onChangeInput("confirmPassword", v)}
             error={errors.confirmPassword}
             type="password"
+            name="confirmPassword"
           />
         </div>
         <div className="mt-2">
@@ -118,6 +115,10 @@ const ChangePassword = () => {
               Object.values(errors).some((v) => v)
             }
           />
+        </div>
+        <div className="self-center flex items-center gap-2">
+          <span>Back to</span>
+          <TextButton text="Login" onClick={() => setPage("login")} />
         </div>
       </div>
     </div>

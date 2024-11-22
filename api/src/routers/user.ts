@@ -6,22 +6,22 @@ import { sendForgotPasswordEmail, sendVerificationEmail } from "../utils/email";
 import { encodeJwt } from "../utils/jwt";
 import { createUser } from "../utils/mongoose";
 
-import { z } from "zod";
-import { RegisterRequest, registerValidation } from "../middlewares/register";
-import { LoginRequest, loginValidation } from "../middlewares/login";
-import {
-  VerifyEmailRequest,
-  verifyEmailValidation,
-} from "../middlewares/verifyEmail";
-import { UserRequest } from "../utils/types";
-import {
-  ForgotPasswordRequest,
-  forgotPasswordValidation,
-} from "../middlewares/forgotPassword";
 import {
   ChangePasswordRequest,
   changePasswordValidation,
 } from "../middlewares/changePassword";
+import {
+  ForgotPasswordRequest,
+  forgotPasswordValidation,
+} from "../middlewares/forgotPassword";
+import { LoginRequest, loginValidation } from "../middlewares/login";
+import { RegisterRequest, registerValidation } from "../middlewares/register";
+import {
+  VerifyEmailRequest,
+  verifyEmailValidation,
+} from "../middlewares/verifyEmail";
+import { sendRegistrationSms } from "../utils/sms";
+import { UserRequest } from "../utils/types";
 
 const UserRouter = Router();
 
@@ -30,10 +30,10 @@ UserRouter.post(
   registerValidation,
   async (req: RegisterRequest, res, next) => {
     try {
-      const { firstName, lastName, email, password } = req.body;
+      const { firstName, lastName, email, password, phoneNumber } = req.body;
 
-      const foundUser = await User.findOne({ email });
-      if (foundUser) {
+      const foundEmail = await User.findOne({ email });
+      if (foundEmail) {
         res.status(400).json({
           success: false,
           code: "email_already_exists",
@@ -43,18 +43,33 @@ UserRouter.post(
         return;
       }
 
-      const user = await createUser(firstName, lastName, email, password);
-      await sendVerificationEmail(email, user.verificationCode);
+      const foundPhoneNumber = await User.findOne({ phoneNumber });
+      if (foundPhoneNumber) {
+        res.status(400).json({
+          success: false,
+          code: "phone_number_already_exists",
+          message: "phone number already exists",
+          data: {},
+        });
+        return;
+      }
 
-      const authToken = encodeJwt({ _id: user._id });
+      const user = await createUser(
+        firstName,
+        lastName,
+        email,
+        password,
+        phoneNumber
+      );
+
+      await sendVerificationEmail(email, user.verificationCode);
+      await sendRegistrationSms(user.phoneNumber, user.verificationCode);
 
       res.json({
         success: true,
         code: "user_registered",
         message: "user registered successfully",
-        data: {
-          authToken,
-        },
+        data: {},
       });
     } catch (error) {
       next(error);
@@ -90,7 +105,7 @@ UserRouter.post(
         return;
       }
 
-      if (!compareSync(password, user.password)) {
+      if (!user.comparePassword(password)) {
         res.status(400).json({
           success: false,
           code: "password_incorrect",
@@ -145,15 +160,12 @@ UserRouter.post(
       }
 
       await user.verifyEmail();
-      const authToken = encodeJwt({ _id: user._id });
 
       res.json({
         success: true,
         code: "email_verified",
         message: "email verified successfully",
-        data: {
-          authToken,
-        },
+        data: {},
       });
     } catch (error) {
       next(error);
@@ -244,6 +256,16 @@ UserRouter.post(
           success: false,
           code: "invalid_verification_code",
           message: "invalid verification code",
+          data: {},
+        });
+        return;
+      }
+
+      if (user.comparePassword(password)) {
+        res.status(400).json({
+          success: false,
+          code: "password_same",
+          message: "password same as previous",
           data: {},
         });
         return;

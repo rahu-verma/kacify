@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const ChangePasswordRequestBody = z.object({
   email: z.string({ message: "Email is required" }),
-  verificationCode: z.string({ message: "Verification code is required" }),
+  verificationCode: z.number({ message: "Verification code is required" }),
   password: z.string().refine(isStrongPassword, {
     message:
       "Password should be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",

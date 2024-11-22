@@ -20,7 +20,7 @@ export const sendEmail = async (to: string, subject: string, text: string) => {
 
 export const sendVerificationEmail = async (
   to: string,
-  verificationCode: string
+  verificationCode: number
 ) => {
   await sendEmail(
     to,
@@ -42,7 +42,7 @@ export const sendErrorEmail = async (error: Error) => {
 
 export const sendForgotPasswordEmail = async (
   to: string,
-  verificationCode: string
+  verificationCode: number
 ) => {
   await sendEmail(
     to,

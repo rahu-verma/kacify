@@ -1,25 +1,27 @@
 import { useCallback, useState } from "react";
+import { isMobilePhone, isStrongPassword } from "validator";
 import isEmail from "validator/lib/isEmail";
 import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
+import { useLoaderContext } from "../context/loader";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
-import { useUserContext } from "../context/user";
 import { registerUser } from "../utils/api";
-import { isStrongPassword } from "validator";
 import { storeAuthToken } from "../utils/authToken";
-import { useLoaderContext } from "../context/loader";
+import { useUserContext } from "../context/user";
 
 const Register = () => {
   const { toastSuccess, toastError } = useToastContext();
   const { setShowLoader } = useLoaderContext();
   const { setPage } = useNavigationContext();
+  const { setEmailToVerify } = useUserContext();
   const [inputs, setInputs] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    phoneNumber: "",
   });
   const [errors, setErrors] = useState({
     firstName: "",
@@ -27,13 +29,23 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    phoneNumber: "",
   });
   const onChangeInput = useCallback(
-    (k: string, v: string) => {
+    (
+      k:
+        | "firstName"
+        | "lastName"
+        | "email"
+        | "password"
+        | "confirmPassword"
+        | "phoneNumber",
+      v: string
+    ) => {
       setInputs((p) => ({ ...p, [k]: v }));
       const errors_ = structuredClone(errors);
       errors_[k] = "";
-      if (!v && !["email", "password", "confirmPassword"].includes(k)) {
+      if (!v) {
         errors_[k] = `Field is required`;
       }
       if (k === "email" && !isEmail(v)) errors_[k] = "Email is invalid";
@@ -46,22 +58,27 @@ const Register = () => {
       if (k === "confirmPassword" && v !== inputs.password) {
         errors_[k] = "Passwords do not match";
       }
+      if (k === "phoneNumber" && !isMobilePhone(v, "en-IN")) {
+        errors_[k] = "Phone number is invalid";
+      }
       setErrors(errors_);
     },
     [errors, inputs]
   );
   const onSubmit = useCallback(() => {
-    const { firstName, lastName, email, password } = inputs;
+    const { firstName, lastName, email, password, phoneNumber } = inputs;
 
     setShowLoader(true);
-    registerUser(firstName, lastName, email, password)
+    registerUser(firstName, lastName, email, password, phoneNumber)
       .then((response) => {
         if (response.success) {
           toastSuccess(`user registered successfully`);
-          storeAuthToken(response.data.authToken);
+          setEmailToVerify(email);
           setPage("verifyEmail");
         } else {
-          toastError(`user registration failed: ${response.message}`);
+          toastError(
+            `user registration failed: ${response.message}`
+          );
         }
       })
       .finally(() => {
@@ -81,6 +98,7 @@ const Register = () => {
             value={inputs.firstName}
             error={errors.firstName}
             onChange={(v) => onChangeInput("firstName", v)}
+            name="firstName"
           />
           <Input
             label="Last Name"
@@ -88,6 +106,7 @@ const Register = () => {
             value={inputs.lastName}
             onChange={(v) => onChangeInput("lastName", v)}
             error={errors.lastName}
+            name="lastName"
           />
         </div>
         <div className="flex">
@@ -98,6 +117,17 @@ const Register = () => {
             type="email"
             onChange={(v) => onChangeInput("email", v)}
             error={errors.email}
+            name="email"
+          />
+        </div>
+        <div className="flex">
+          <Input
+            label="Phone Number (Indian)"
+            required
+            value={inputs.phoneNumber}
+            onChange={(v) => onChangeInput("phoneNumber", v)}
+            error={errors.phoneNumber}
+            name="phoneNumber"
           />
         </div>
         <div className={"flex gap-4"}>
@@ -108,6 +138,7 @@ const Register = () => {
             type="password"
             onChange={(v) => onChangeInput("password", v)}
             error={errors.password}
+            name="password"
           />
           <Input
             label="Confirm Password"
@@ -116,6 +147,7 @@ const Register = () => {
             type="password"
             onChange={(v) => onChangeInput("confirmPassword", v)}
             error={errors.confirmPassword}
+            name="confirmPassword"
           />
         </div>
         <div className="mt-2">

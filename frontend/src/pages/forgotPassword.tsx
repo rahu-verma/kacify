@@ -1,15 +1,17 @@
 import { useCallback, useState } from "react";
-import { TextButtonFilled } from "../components/buttons";
+import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
 import { forgotPassword } from "../utils/api";
 import { useLoaderContext } from "../context/loader";
+import { useUserContext } from "../context/user";
 
 const ForgotPassword = () => {
   const { toastSuccess, toastError } = useToastContext();
   const { setPage } = useNavigationContext();
   const { setShowLoader } = useLoaderContext();
+  const { setEmailToVerify } = useUserContext();
   const [inputs, setInputs] = useState({
     email: "",
   });
@@ -36,6 +38,7 @@ const ForgotPassword = () => {
       .then((response) => {
         if (response.success) {
           toastSuccess(`verification code sent to email successfully`);
+          setEmailToVerify(email);
           setPage("changePassword");
         } else {
           toastError(`forgot password failed: ${response.message}`);
@@ -58,6 +61,7 @@ const ForgotPassword = () => {
             value={inputs.email}
             onChange={(v) => onChangeInput("email", v)}
             error={errors.email}
+            name="email"
           />
         </div>
         <div className="mt-2">
@@ -69,6 +73,10 @@ const ForgotPassword = () => {
               Object.values(errors).some((v) => v)
             }
           />
+        </div>
+        <div className="self-center flex items-center gap-2">
+          <span>Back to</span>
+          <TextButton text="Login" onClick={() => setPage("login")} />
         </div>
       </div>
     </div>
