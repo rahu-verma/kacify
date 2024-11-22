@@ -20,7 +20,7 @@ import {
   VerifyEmailRequest,
   verifyEmailValidation,
 } from "../middlewares/verifyEmail";
-import { sendRegistrationSms } from "../utils/sms";
+import { sendForgotPasswordSms, sendRegistrationSms } from "../utils/sms";
 import { UserRequest } from "../utils/types";
 
 const UserRouter = Router();
@@ -221,6 +221,10 @@ UserRouter.post(
 
       await user.setForgotPasswordVerificationCode();
       await sendForgotPasswordEmail(email, user.forgotPasswordVerificationCode);
+      await sendForgotPasswordSms(
+        user.phoneNumber,
+        user.forgotPasswordVerificationCode
+      );
 
       res.json({
         success: true,

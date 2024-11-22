@@ -27,3 +27,13 @@ export const sendRegistrationSms = async (
     `Your verification code is ${verificationCode}`
   );
 };
+
+export const sendForgotPasswordSms = async (
+  phoneNumber: string,
+  verificationCode: number
+) => {
+  return await sendSms(
+    phoneNumber,
+    `Your forgot password verification code is ${verificationCode}`
+  );
+};
