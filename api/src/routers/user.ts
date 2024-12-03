@@ -1,177 +1,171 @@
-import { compareSync } from "bcrypt";
 import { Router } from "express";
 import { authVerification } from "../middlewares/auth";
 import User from "../models/user";
 import { sendForgotPasswordEmail, sendVerificationEmail } from "../utils/email";
 import { encodeJwt } from "../utils/jwt";
 import { createUser } from "../utils/mongoose";
-
-import {
-  ChangePasswordRequest,
-  changePasswordValidation,
-} from "../middlewares/changePassword";
-import {
-  ForgotPasswordRequest,
-  forgotPasswordValidation,
-} from "../middlewares/forgotPassword";
-import { LoginRequest, loginValidation } from "../middlewares/login";
-import { RegisterRequest, registerValidation } from "../middlewares/register";
-import {
-  VerifyEmailRequest,
-  verifyEmailValidation,
-} from "../middlewares/verifyEmail";
-import { sendForgotPasswordSms, sendRegistrationSms } from "../utils/sms";
+import { UserRouterProfileSerializer } from "../utils/serializers";
 import { UserRequest } from "../utils/types";
+import {
+  ChangePasswordRequestBody,
+  ForgotPasswordRequestBody,
+  LoginRequestBody,
+  RegisterRequestBody,
+  VerifyEmailRequestBody,
+} from "../utils/validations";
 
 const UserRouter = Router();
 
-UserRouter.post(
-  "/register",
-  registerValidation,
-  async (req: RegisterRequest, res, next) => {
-    try {
-      const { firstName, lastName, email, password, phoneNumber } = req.body;
+UserRouter.post("/register", async (req, res, next) => {
+  try {
+    const results = RegisterRequestBody.safeParse(req.body);
+    if (!results.success) {
+      res.status(400).json({
+        success: false,
+        message: "validation failed",
+        data: results.error.format(),
+        code: "validationFailed",
+      });
+      return;
+    }
 
-      const foundEmail = await User.findOne({ email });
-      if (foundEmail) {
-        res.status(400).json({
-          success: false,
-          code: "email_already_exists",
-          message: "email already exists",
-          data: {},
-        });
-        return;
-      }
+    const { firstName, lastName, email, password } = results.data;
 
-      const foundPhoneNumber = await User.findOne({ phoneNumber });
-      if (foundPhoneNumber) {
-        res.status(400).json({
-          success: false,
-          code: "phone_number_already_exists",
-          message: "phone number already exists",
-          data: {},
-        });
-        return;
-      }
-
-      const user = await createUser(
-        firstName,
-        lastName,
-        email,
-        password,
-        phoneNumber
-      );
-
-      await sendVerificationEmail(email, user.verificationCode);
-      await sendRegistrationSms(user.phoneNumber, user.verificationCode);
-
-      res.json({
-        success: true,
-        code: "user_registered",
-        message: "user registered successfully",
+    const foundEmail = await User.findOne({ email });
+    if (foundEmail) {
+      res.status(400).json({
+        success: false,
+        code: "emailAlreadyExists",
+        message: "email already exists",
         data: {},
       });
-    } catch (error) {
-      next(error);
+      return;
     }
+
+    const user = await createUser(firstName, lastName, email, password);
+
+    await sendVerificationEmail(email, user.verificationCode);
+
+    res.json({
+      success: true,
+      code: "userRegistered",
+      message: "user registered successfully",
+      data: {},
+    });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
-UserRouter.post(
-  "/login",
-  loginValidation,
-  async (req: LoginRequest, res, next) => {
-    try {
-      const { email, password } = req.body;
-
-      const user = await User.findOne({ email });
-      if (!user) {
-        res.status(400).json({
-          success: false,
-          code: "email_not_found",
-          message: "email not found",
-          data: {},
-        });
-        return;
-      }
-
-      if (!user.emailVerified) {
-        res.status(400).json({
-          success: false,
-          code: "email_not_verified",
-          message: "email not verified",
-          data: {},
-        });
-        return;
-      }
-
-      if (!user.comparePassword(password)) {
-        res.status(400).json({
-          success: false,
-          code: "password_incorrect",
-          message: "password incorrect",
-          data: {},
-        });
-        return;
-      }
-
-      const authToken = encodeJwt({ _id: user._id });
-
-      res.json({
-        success: true,
-        code: "user_logged_in",
-        message: "user login successfully",
-        data: {
-          authToken,
-        },
+UserRouter.post("/login", async (req, res, next) => {
+  try {
+    const results = LoginRequestBody.safeParse(req.body);
+    if (!results.success) {
+      res.status(400).json({
+        success: false,
+        message: "validation failed",
+        data: results.error.format(),
+        code: "validationFailed",
       });
-    } catch (error) {
-      next(error);
+      return;
     }
-  }
-);
 
-UserRouter.post(
-  "/verifyEmail",
-  verifyEmailValidation,
-  async (req: VerifyEmailRequest, res, next) => {
-    try {
-      let { email, verificationCode } = req.body;
+    const { email, password } = results.data;
 
-      const user = await User.findOne({ email });
-      if (!user) {
-        res.status(400).json({
-          success: false,
-          code: "email_not_found",
-          message: "email not found",
-          data: {},
-        });
-        return;
-      }
-
-      if (verificationCode !== user.verificationCode) {
-        res.status(400).json({
-          success: false,
-          code: "invalid_verification_code",
-          message: "invalid verification code",
-          data: {},
-        });
-        return;
-      }
-
-      await user.verifyEmail();
-
-      res.json({
-        success: true,
-        code: "email_verified",
-        message: "email verified successfully",
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        code: "emailNotFound",
+        message: "email not found",
         data: {},
       });
-    } catch (error) {
-      next(error);
+      return;
     }
+
+    if (!user.emailVerified) {
+      res.status(400).json({
+        success: false,
+        code: "emailNotVerified",
+        message: "email not verified",
+        data: {},
+      });
+      return;
+    }
+
+    if (!user.comparePassword(password)) {
+      res.status(400).json({
+        success: false,
+        code: "passwordIncorrect",
+        message: "password incorrect",
+        data: {},
+      });
+      return;
+    }
+
+    const authToken = encodeJwt({ _id: user._id });
+
+    res.json({
+      success: true,
+      code: "userLoggedIn",
+      message: "user login successfully",
+      data: {
+        authToken,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-);
+});
+
+UserRouter.post("/verifyEmail", async (req, res, next) => {
+  try {
+    const results = VerifyEmailRequestBody.safeParse(req.body);
+    if (!results.success) {
+      res.status(400).json({
+        success: false,
+        message: "validation failed",
+        data: results.error.format(),
+        code: "validationFailed",
+      });
+      return;
+    }
+
+    let { email, verificationCode } = results.data;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        code: "emailNotFound",
+        message: "email not found",
+        data: {},
+      });
+      return;
+    }
+
+    if (verificationCode !== user.verificationCode) {
+      res.status(400).json({
+        success: false,
+        code: "invalidVerificationCode",
+        message: "invalid verification code",
+        data: {},
+      });
+      return;
+    }
+
+    await user.verifyEmail();
+
+    res.json({
+      success: true,
+      code: "emailVerified",
+      message: "email verified successfully",
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 UserRouter.get(
   "/profile",
@@ -181,7 +175,7 @@ UserRouter.get(
       if (!req.user.emailVerified) {
         res.status(400).json({
           success: false,
-          code: "email_not_verified",
+          code: "emailNotVerified",
           message: "email not verified",
           data: {},
         });
@@ -191,9 +185,7 @@ UserRouter.get(
       res.json({
         success: true,
         message: "profile fetched successfully",
-        data: {
-          user: req.user,
-        },
+        data: UserRouterProfileSerializer(req.user),
       });
     } catch (error) {
       next(error);
@@ -201,91 +193,101 @@ UserRouter.get(
   }
 );
 
-UserRouter.post(
-  "/forgotPassword",
-  forgotPasswordValidation,
-  async (req: ForgotPasswordRequest, res, next) => {
-    try {
-      const { email } = req.body;
+UserRouter.post("/forgotPassword", async (req, res, next) => {
+  try {
+    const results = ForgotPasswordRequestBody.safeParse(req.body);
+    if (!results.success) {
+      res.status(400).json({
+        success: false,
+        message: "validation failed",
+        data: results.error.format(),
+        code: "validationFailed",
+      });
+      return;
+    }
 
-      const user = await User.findOne({ email });
-      if (!user) {
-        res.status(400).json({
-          success: false,
-          code: "email_not_found",
-          message: "email not found",
-          data: {},
-        });
-        return;
-      }
+    const { email } = results.data;
 
-      await user.setForgotPasswordVerificationCode();
-      await sendForgotPasswordEmail(email, user.forgotPasswordVerificationCode);
-      await sendForgotPasswordSms(
-        user.phoneNumber,
-        user.forgotPasswordVerificationCode
-      );
-
-      res.json({
-        success: true,
-        message: "forgot password verification code sent successfully",
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        code: "emailNotFound",
+        message: "email not found",
         data: {},
       });
-    } catch (error) {
-      next(error);
+      return;
     }
+
+    await user.setForgotPasswordVerificationCode();
+    await sendForgotPasswordEmail(email, user.forgotPasswordVerificationCode);
+
+    res.json({
+      success: true,
+      message: "forgot password verification code sent successfully",
+      data: {},
+    });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
-UserRouter.post(
-  "/changePassword",
-  changePasswordValidation,
-  async (req: ChangePasswordRequest, res, next) => {
-    try {
-      const { email, verificationCode, password } = req.body;
+UserRouter.post("/changePassword", async (req, res, next) => {
+  try {
+    const results = ChangePasswordRequestBody.safeParse(req.body);
+    if (!results.success) {
+      res.status(400).json({
+        success: false,
+        message: "validation failed",
+        data: results.error.format(),
+        code: "validationFailed",
+      });
+      return;
+    }
 
-      const user = await User.findOne({ email });
-      if (!user) {
-        res.status(400).json({
-          success: false,
-          code: "email_not_found",
-          message: "email not found",
-          data: {},
-        });
-        return;
-      }
+    const { email, verificationCode, password } = results.data;
 
-      if (verificationCode !== user.forgotPasswordVerificationCode) {
-        res.status(400).json({
-          success: false,
-          code: "invalid_verification_code",
-          message: "invalid verification code",
-          data: {},
-        });
-        return;
-      }
-
-      if (user.comparePassword(password)) {
-        res.status(400).json({
-          success: false,
-          code: "password_same",
-          message: "password same as previous",
-          data: {},
-        });
-        return;
-      }
-
-      await user.changePassword(password);
-
-      res.json({
-        success: true,
-        message: "password changed successfully",
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        code: "emailNotFound",
+        message: "email not found",
         data: {},
       });
-    } catch (error) {
-      next(error);
+      return;
     }
+
+    if (verificationCode !== user.forgotPasswordVerificationCode) {
+      res.status(400).json({
+        success: false,
+        code: "invalidVerificationCode",
+        message: "invalid verification code",
+        data: {},
+      });
+      return;
+    }
+
+    if (user.comparePassword(password)) {
+      res.status(400).json({
+        success: false,
+        code: "passwordSame",
+        message: "password same as previous",
+        data: {},
+      });
+      return;
+    }
+
+    await user.changePassword(password);
+
+    res.json({
+      success: true,
+      message: "password changed successfully",
+      data: {},
+    });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 export default UserRouter;

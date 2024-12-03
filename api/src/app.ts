@@ -5,6 +5,7 @@ import UserRouter from "./routers/user";
 import env from "./utils/env";
 import morgan from "morgan";
 import { errorHandler, notFoundHandler } from "./middlewares/common";
+import PermissionRouter from "./routers/permission";
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.get("/version", (req, res) => {
 
 app.use("/product", ProductRouter);
 app.use("/user", UserRouter);
+app.use("/permission", PermissionRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

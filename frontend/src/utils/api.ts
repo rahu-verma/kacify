@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getAuthToken, storeAuthToken } from "./authToken";
+import { getAuthToken } from "./authToken";
 
 export type Product = {
   _id: string;
@@ -12,8 +12,9 @@ export type User = {
   _id: string;
   firstName: string;
   lastName: string;
+  image: string;
   email: string;
-  password: string;
+  userType: "admin" | "user" | "superuser";
 };
 
 type Response<Data> = {
@@ -25,7 +26,7 @@ type Response<Data> = {
 
 const request = async <ResponseData>(
   url: string,
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "PUT",
   data: Record<string, string | number> = {},
   headers: Record<string, string> = {}
 ): Promise<Response<ResponseData>> => {
@@ -52,7 +53,7 @@ const request = async <ResponseData>(
 
 const authRequest = async <ResponseData>(
   url: string,
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "PUT",
   data: Record<string, string> = {}
 ): Promise<Response<ResponseData>> => {
   return await request(url, method, data, {
@@ -68,15 +69,13 @@ export const registerUser = async (
   firstName: string,
   lastName: string,
   email: string,
-  password: string,
-  phoneNumber: string
+  password: string
 ) => {
   return await request<{}>("user/register", "POST", {
     firstName,
     lastName,
     email,
     password,
-    phoneNumber,
   });
 };
 
@@ -113,5 +112,25 @@ export const changePassword = async (
     email,
     verificationCode,
     password,
+  });
+};
+
+export const editUser = async (
+  firstName: string,
+  lastName: string,
+  email: string,
+  password: string
+) => {
+  return await authRequest<{}>("user/edit", "PUT", {
+    firstName,
+    lastName,
+    email,
+    password,
+  });
+};
+
+export const addPermission = async (name: string) => {
+  return await authRequest<{}>("permission/add", "POST", {
+    name,
   });
 };

@@ -5,8 +5,7 @@ export const createUser = async (
   firstName: string,
   lastName: string,
   email: string,
-  password: string,
-  phoneNumber: string
+  password: string
 ) => {
   password = hashPassword(password);
   const verificationCode = Math.floor(100000 + Math.random() * 900000);
@@ -17,7 +16,6 @@ export const createUser = async (
     password,
     verificationCode,
     emailVerified: false,
-    phoneNumber,
   });
   await user.save();
   return user;

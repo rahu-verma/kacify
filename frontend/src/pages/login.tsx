@@ -42,7 +42,7 @@ const Login = () => {
           storeAuthToken(response.data.authToken);
           setPage("profile");
         } else {
-          if (response.code === "email_not_verified") {
+          if (response.code === "emailNotVerified") {
             setPage("verifyEmail");
           }
           toastError(`user login failed: ${response.message}`);

@@ -1,14 +1,11 @@
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import { NextFunction, RequestHandler, Response } from "express";
 import { JwtPayload } from "jsonwebtoken";
-import User, { TUser } from "../models/user";
+import User, { UserType } from "../models/user";
 import { decodeJwt } from "../utils/jwt";
-
-interface TRequest extends Request {
-  user: TUser;
-}
+import { UserRequest } from "../utils/types";
 
 export const authVerification = async (
-  req: TRequest,
+  req: UserRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -54,4 +51,46 @@ export const authVerification = async (
   } catch (error) {
     next(error);
   }
+};
+
+export const permissionVerification = (
+  permissions: string[]
+): RequestHandler => {
+  return async (req: UserRequest, res: Response, next: NextFunction) => {
+    try {
+      if (
+        !permissions.every((permission) =>
+          req.user.permissions.includes(permission)
+        )
+      ) {
+        res.status(403).json({
+          success: false,
+          message: "permission denied",
+          data: {},
+        });
+        return;
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+};
+
+export const userVerification = (userType: UserType): RequestHandler => {
+  return async (req: UserRequest, res: Response, next: NextFunction) => {
+    try {
+      if (req.user.userType !== userType) {
+        res.status(403).json({
+          success: false,
+          message: "permission denied",
+          data: {},
+        });
+        return;
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
 };

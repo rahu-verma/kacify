@@ -1,13 +1,13 @@
 import { Schema, model } from "mongoose";
 
-export type Product = {
+export type TProduct = {
   _id: string;
   name: string;
   image: string;
   price: number;
 };
 
-const schema = new Schema<Product>({
+const schema = new Schema<TProduct>({
   name: {
     type: String,
     required: true,
@@ -18,7 +18,7 @@ const schema = new Schema<Product>({
     required: true,
     minlength: 1,
     validate: {
-      validator: (v) => v.match(/^[A-Za-z0-9-]+$/),
+      validator: (v) => v.match(/^[A-Za-z0-9-.]+$/),
     },
   },
   price: {
@@ -33,7 +33,9 @@ schema.pre("save", function (next) {
   next();
 });
 
-const Product = model<Product>("Product", schema);
+export const ProductModelName = "Product";
+
+const Product = model<TProduct>(ProductModelName, schema);
 
 Product.syncIndexes();
 

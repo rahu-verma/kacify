@@ -13,7 +13,8 @@ type Page =
   | "login"
   | "verifyEmail"
   | "forgotPassword"
-  | "changePassword";
+  | "changePassword"
+  | "superuserHome";
 
 const Context = createContext<{
   page: Page;

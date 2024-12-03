@@ -6,9 +6,8 @@ import Input from "../components/input";
 import { useLoaderContext } from "../context/loader";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
-import { registerUser } from "../utils/api";
-import { storeAuthToken } from "../utils/authToken";
 import { useUserContext } from "../context/user";
+import { registerUser } from "../utils/api";
 
 const Register = () => {
   const { toastSuccess, toastError } = useToastContext();
@@ -21,7 +20,6 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    phoneNumber: "",
   });
   const [errors, setErrors] = useState({
     firstName: "",
@@ -29,7 +27,6 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    phoneNumber: "",
   });
   const onChangeInput = useCallback(
     (
@@ -66,19 +63,17 @@ const Register = () => {
     [errors, inputs]
   );
   const onSubmit = useCallback(() => {
-    const { firstName, lastName, email, password, phoneNumber } = inputs;
+    const { firstName, lastName, email, password } = inputs;
 
     setShowLoader(true);
-    registerUser(firstName, lastName, email, password, phoneNumber)
+    registerUser(firstName, lastName, email, password)
       .then((response) => {
         if (response.success) {
           toastSuccess(`user registered successfully`);
           setEmailToVerify(email);
           setPage("verifyEmail");
         } else {
-          toastError(
-            `user registration failed: ${response.message}`
-          );
+          toastError(`user registration failed: ${response.message}`);
         }
       })
       .finally(() => {
@@ -118,16 +113,6 @@ const Register = () => {
             onChange={(v) => onChangeInput("email", v)}
             error={errors.email}
             name="email"
-          />
-        </div>
-        <div className="flex">
-          <Input
-            label="Phone Number (Indian)"
-            required
-            value={inputs.phoneNumber}
-            onChange={(v) => onChangeInput("phoneNumber", v)}
-            error={errors.phoneNumber}
-            name="phoneNumber"
           />
         </div>
         <div className={"flex gap-4"}>

@@ -1,8 +1,11 @@
-import { Schema, model, Document } from "mongoose";
-import { hashPassword } from "../utils/bcrypt";
-import isEmail from "validator/lib/isEmail";
-import { isMobilePhone, isStrongPassword } from "validator";
 import { compareSync } from "bcrypt";
+import { Document, Schema, Types, model } from "mongoose";
+import { isAlphanumeric, isStrongPassword } from "validator";
+import isEmail from "validator/lib/isEmail";
+import { hashPassword } from "../utils/bcrypt";
+import { PermissionModelName } from "./permission";
+
+export type UserType = "admin" | "user" | "superuser";
 
 export interface TUser extends Document {
   _id: string;
@@ -17,8 +20,10 @@ export interface TUser extends Document {
   setForgotPasswordVerificationCode: () => Promise<void>;
   clearForgotPasswordVerificationCode: () => Promise<void>;
   changePassword: (password: string) => Promise<void>;
-  phoneNumber: string;
   comparePassword: (password: string) => boolean;
+  image: string;
+  userType: UserType;
+  permissions: string[];
 }
 
 const schema = new Schema<TUser>({
@@ -59,13 +64,24 @@ const schema = new Schema<TUser>({
     type: Number,
     default: null,
   },
-  phoneNumber: {
+  image: {
     type: String,
-    required: true,
+    default: null,
     validate: {
-      validator: (v) => isMobilePhone(v, "en-IN"),
+      validator: (v) => isAlphanumeric(v) || v.length === 0 || v === null,
     },
   },
+  userType: {
+    type: String,
+    enum: ["admin", "user", "superuser"],
+    default: "user",
+  },
+  permissions: [
+    {
+      type: Types.ObjectId,
+      ref: PermissionModelName,
+    },
+  ],
 });
 
 schema.pre("save", function (next) {
@@ -109,7 +125,9 @@ schema.methods.comparePassword = function (password: string) {
   return compareSync(password, this.password);
 };
 
-const User = model<TUser>("User", schema);
+export const UserModelName = "User";
+
+const User = model<TUser>(UserModelName, schema);
 
 User.syncIndexes();
 

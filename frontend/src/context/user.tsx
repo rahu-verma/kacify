@@ -33,11 +33,15 @@ export const UserProvider = ({ children }) => {
   const [emailToVerify, setEmailToVerify] = useState<string>();
 
   useEffect(() => {
-    if (getAuthToken() && page === "profile") {
+    if (getAuthToken()) {
       setIsLoading(true);
       getUserProfile().then((response) => {
         if (response.success) {
-          setUser(response.data.user);
+          const user = response.data.user;
+          setUser(user);
+          if (user.userType === "superuser") {
+            setPage("superuserHome");
+          }
         } else {
           toastError(`failed to get user profile: ${response.message}`);
         }

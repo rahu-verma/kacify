@@ -11,6 +11,7 @@ import Loader from "./pages/loader";
 import ForgotPassword from "./pages/forgotPassword";
 import { useLoaderContext } from "./context/loader";
 import ChangePassword from "./pages/changePassword";
+import SuperuserHome from "./pages/superuserHome";
 
 const App = () => {
   const { page } = useNavigationContext();
@@ -28,6 +29,7 @@ const App = () => {
       {page === "verifyEmail" && <VerifyEmail />}
       {page === "forgotPassword" && <ForgotPassword />}
       {page === "changePassword" && <ChangePassword />}
+      {page === "superuserHome" && <SuperuserHome />}
       {showLoader && (
         <div className="absolute h-screen w-full top-0 flex items-center justify-center z-50 bg-white opacity-50">
           <Loader />
