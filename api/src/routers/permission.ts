@@ -6,6 +6,9 @@ import {
   permissionVerification,
   userVerification,
 } from "../middlewares/auth";
+import { requestBodyValidation } from "../middlewares/validation";
+import { RequestBodyValidatedUserRequest } from "../utils/types";
+import { z } from "zod";
 
 const PermissionRouter = Router();
 
@@ -14,20 +17,17 @@ PermissionRouter.get(
   authVerification,
   userVerification("superuser"),
   permissionVerification(["addPermission"]),
-  async (req, res, next) => {
+  requestBodyValidation(PermissionAddRequestBody),
+  async (
+    req: RequestBodyValidatedUserRequest<
+      z.infer<typeof PermissionAddRequestBody>
+    >,
+    res,
+    next
+  ) => {
     try {
-      const results = PermissionAddRequestBody.safeParse(req.body);
-      if (!results.success) {
-        res.status(400).json({
-          success: false,
-          message: "validation failed",
-          data: results.error.format(),
-          code: "validationFailed",
-        });
-        return;
-      }
+      const { name } = req.body;
 
-      const { name } = results.data;
       await PermissionModel.create({ name });
 
       res.json({

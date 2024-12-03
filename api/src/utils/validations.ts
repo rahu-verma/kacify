@@ -1,4 +1,4 @@
-import { isMobilePhone, isStrongPassword } from "validator";
+import { isStrongPassword } from "validator";
 import { z } from "zod";
 
 export const ChangePasswordRequestBody = z.object({
