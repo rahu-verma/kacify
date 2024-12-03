@@ -1,5 +1,5 @@
 # [UNDER DEVELOPMENT]
-# KACIFY - An ecommerce
+# KACIFY
 
 ## Tech Stack
 - Database - MongoDB
