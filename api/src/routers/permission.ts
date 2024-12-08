@@ -1,6 +1,6 @@
 import { Router } from "express";
 import PermissionModel from "../models/permission";
-import { PermissionAddRequestBody } from "../utils/validations";
+import { PermissionAddRequestBody } from "../utils/zod";
 import {
   authVerification,
   permissionVerification,
@@ -9,6 +9,7 @@ import {
 import { requestBodyValidation } from "../middlewares/validation";
 import { RequestBodyValidatedUserRequest } from "../utils/types";
 import { z } from "zod";
+import { errorCatcher } from "../middlewares/error";
 
 const PermissionRouter = Router();
 
@@ -18,14 +19,14 @@ PermissionRouter.get(
   userVerification("superuser"),
   permissionVerification(["addPermission"]),
   requestBodyValidation(PermissionAddRequestBody),
-  async (
-    req: RequestBodyValidatedUserRequest<
-      z.infer<typeof PermissionAddRequestBody>
-    >,
-    res,
-    next
-  ) => {
-    try {
+  errorCatcher(
+    async (
+      req: RequestBodyValidatedUserRequest<
+        z.infer<typeof PermissionAddRequestBody>
+      >,
+      res,
+      next
+    ) => {
       const { name } = req.body;
 
       await PermissionModel.create({ name });
@@ -36,10 +37,8 @@ PermissionRouter.get(
         code: "permissionAdded",
         data: {},
       });
-    } catch (error) {
-      next(error);
     }
-  }
+  )
 );
 
 export default PermissionRouter;

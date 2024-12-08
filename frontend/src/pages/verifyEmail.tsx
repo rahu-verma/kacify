@@ -1,12 +1,11 @@
 import { useCallback, useState } from "react";
 import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
+import { useLoaderContext } from "../context/loader";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
-import { verifyEmail } from "../utils/api";
-import { storeAuthToken } from "../utils/authToken";
-import { useLoaderContext } from "../context/loader";
 import { useUserContext } from "../context/user";
+import { verifyEmail } from "../utils/api";
 
 const VerifyEmail = () => {
   const { toastSuccess, toastError } = useToastContext();
@@ -55,7 +54,7 @@ const VerifyEmail = () => {
     <div className="flex justify-center">
       <div className="mt-6 flex flex-col gap-4 w-96">
         <span className="self-center py-2 text-xl uppercase font-bold">
-          Verify Email or Phone Number
+          Verify Email
         </span>
         <div className="flex">
           <Input

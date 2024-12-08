@@ -14,7 +14,8 @@ export type User = {
   lastName: string;
   image: string;
   email: string;
-  userType: "admin" | "user" | "superuser";
+  role: "admin" | "user" | "superuser";
+  emailVerified: boolean;
 };
 
 type Response<Data> = {
@@ -119,13 +120,15 @@ export const editUser = async (
   firstName: string,
   lastName: string,
   email: string,
-  password: string
+  password?: string,
+  image?: string
 ) => {
   return await authRequest<{}>("user/edit", "PUT", {
     firstName,
     lastName,
     email,
-    password,
+    ...(password ? { password } : {}),
+    ...(image ? { image } : {}),
   });
 };
 

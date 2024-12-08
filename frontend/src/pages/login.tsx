@@ -6,6 +6,7 @@ import { useToastContext } from "../context/toast";
 import { loginUser } from "../utils/api";
 import { storeAuthToken } from "../utils/authToken";
 import { useLoaderContext } from "../context/loader";
+import { useUserContext } from "../context/user";
 
 const Login = () => {
   const { toastSuccess, toastError } = useToastContext();
@@ -19,6 +20,7 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const { refreshUser } = useUserContext();
   const onChangeInput = useCallback(
     (k: string, v: string) => {
       setInputs((p) => ({ ...p, [k]: v }));
@@ -41,6 +43,7 @@ const Login = () => {
           toastSuccess(`user login successfully`);
           storeAuthToken(response.data.authToken);
           setPage("profile");
+          refreshUser();
         } else {
           if (response.code === "emailNotVerified") {
             setPage("verifyEmail");

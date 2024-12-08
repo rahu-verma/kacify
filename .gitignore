@@ -3,3 +3,4 @@ node_modules
 tasks.md
 build
 .next
+.env.test

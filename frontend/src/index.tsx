@@ -12,13 +12,13 @@ const root = createRoot(document.getElementById("root")!);
 root.render(
   <ToastProvider>
     <LoaderProvider>
-      <NavigationProvider>
-        <ProductProvider>
-          <UserProvider>
+      <UserProvider>
+        <NavigationProvider>
+          <ProductProvider>
             <App />
-          </UserProvider>
-        </ProductProvider>
-      </NavigationProvider>
+          </ProductProvider>
+        </NavigationProvider>
+      </UserProvider>
     </LoaderProvider>
   </ToastProvider>
 );

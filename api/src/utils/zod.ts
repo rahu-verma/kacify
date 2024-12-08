@@ -43,3 +43,30 @@ export const VerifyEmailRequestBody = z.object({
 export const PermissionAddRequestBody = z.object({
   name: z.string({ message: "Name is required" }),
 });
+
+export const UserEditRequestBody = z.object({
+  firstName: z
+    .string()
+    .min(1, { message: "First name is required" })
+    .transform((v) => v.trim().replace(/[^A-Za-z0-9]/g, "")),
+  lastName: z
+    .string()
+    .min(1, { message: "Last name is required" })
+    .transform((v) => v.trim().replace(/[^A-Za-z0-9]/g, "")),
+  email: z.string().email({ message: "Email is invalid" }),
+  password: z
+    .string()
+    .refine(isStrongPassword, {
+      message:
+        "Password should be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+    })
+    .optional(),
+  image: z.string().optional(),
+});
+
+export const ProductRouterSerializerSchema = z.object({
+  _id: z.string(),
+  name: z.string(),
+  price: z.number(),
+  image: z.string(),
+});

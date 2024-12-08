@@ -4,11 +4,14 @@ import ProductRouter from "./routers/product";
 import UserRouter from "./routers/user";
 import env from "./utils/env";
 import morgan from "morgan";
-import { errorHandler, notFoundHandler } from "./middlewares/common";
+import { errorHandler } from "./middlewares/error";
 import PermissionRouter from "./routers/permission";
+import rateLimit from "express-rate-limit";
+import { notFoundHandler } from "./middlewares/general";
 
 const app = express();
 
+app.use(rateLimit({ windowMs: 1000, limit: 2 }));
 app.use(morgan("dev"));
 app.use(cors({ origin: env.CORS_ORIGIN }));
 app.use(express.json());

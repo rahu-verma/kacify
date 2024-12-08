@@ -1,13 +1,12 @@
 import { useCallback, useState } from "react";
+import { isStrongPassword } from "validator";
 import { TextButton, TextButtonFilled } from "../components/buttons";
 import Input from "../components/input";
+import { useLoaderContext } from "../context/loader";
 import { useNavigationContext } from "../context/navigation";
 import { useToastContext } from "../context/toast";
-import { changePassword, verifyEmail } from "../utils/api";
-import { storeAuthToken } from "../utils/authToken";
-import { useLoaderContext } from "../context/loader";
-import { isStrongPassword } from "validator";
 import { useUserContext } from "../context/user";
+import { changePassword } from "../utils/api";
 
 const ChangePassword = () => {
   const { toastSuccess, toastError } = useToastContext();

@@ -1,3 +1,4 @@
+import { MouseEventHandler, useCallback } from "react";
 import { IconType } from "react-icons";
 
 export const TextButton = ({
@@ -68,5 +69,38 @@ export const TextButtonFilled = ({
     >
       {text}
     </div>
+  );
+};
+
+export const ImageButton = ({
+  src,
+  onClick,
+  className,
+}: {
+  src: string;
+  onClick?: () => void;
+  className?: string;
+}) => {
+  const handleClick: MouseEventHandler<HTMLImageElement> = useCallback(
+    (event) => {
+      const element = event.target as HTMLImageElement;
+      element.style.scale = "0.9";
+      setTimeout(() => {
+        element.style.scale = "1";
+        onClick?.();
+      }, 200);
+    },
+    []
+  );
+  return (
+    <img
+      src={src}
+      alt="avatar"
+      className={
+        "rounded-full w-20 h-20 border-2 border-gray-600 object-cover cursor-pointer hover:opacity-50 transition-all duration-300 " +
+        className
+      }
+      onClick={handleClick}
+    />
   );
 };

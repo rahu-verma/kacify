@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { json, Router } from "express";
 import { z } from "zod";
 import { authVerification } from "../middlewares/auth";
 import { requestBodyValidation } from "../middlewares/validation";
@@ -7,26 +7,32 @@ import { sendForgotPasswordEmail, sendVerificationEmail } from "../utils/email";
 import { encodeJwt } from "../utils/jwt";
 import { createUser } from "../utils/mongoose";
 import { UserRouterProfileSerializer } from "../utils/serializers";
-import { RequestBodyValidatedRequest, UserRequest } from "../utils/types";
+import {
+  RequestBodyValidatedRequest,
+  RequestBodyValidatedUserRequest,
+  UserRequest,
+} from "../utils/types";
 import {
   ChangePasswordRequestBody,
   ForgotPasswordRequestBody,
   LoginRequestBody,
   RegisterRequestBody,
+  UserEditRequestBody,
   VerifyEmailRequestBody,
-} from "../utils/validations";
+} from "../utils/zod";
+import { errorCatcher } from "../middlewares/error";
 
 const UserRouter = Router();
 
 UserRouter.post(
   "/register",
   requestBodyValidation(RegisterRequestBody),
-  async (
-    req: RequestBodyValidatedRequest<z.infer<typeof RegisterRequestBody>>,
-    res,
-    next
-  ) => {
-    try {
+  errorCatcher(
+    async (
+      req: RequestBodyValidatedRequest<z.infer<typeof RegisterRequestBody>>,
+      res,
+      next
+    ) => {
       const { firstName, lastName, email, password } = req.body;
 
       const foundEmail = await User.findOne({ email });
@@ -50,21 +56,19 @@ UserRouter.post(
         message: "user registered successfully",
         data: {},
       });
-    } catch (error) {
-      next(error);
     }
-  }
+  )
 );
 
 UserRouter.post(
   "/login",
   requestBodyValidation(LoginRequestBody),
-  async (
-    req: RequestBodyValidatedRequest<z.infer<typeof LoginRequestBody>>,
-    res,
-    next
-  ) => {
-    try {
+  errorCatcher(
+    async (
+      req: RequestBodyValidatedRequest<z.infer<typeof LoginRequestBody>>,
+      res,
+      next
+    ) => {
       const { email, password } = req.body;
 
       const user = await User.findOne({ email });
@@ -108,21 +112,19 @@ UserRouter.post(
           authToken,
         },
       });
-    } catch (error) {
-      next(error);
     }
-  }
+  )
 );
 
 UserRouter.post(
   "/verifyEmail",
   requestBodyValidation(VerifyEmailRequestBody),
-  async (
-    req: RequestBodyValidatedRequest<z.infer<typeof VerifyEmailRequestBody>>,
-    res,
-    next
-  ) => {
-    try {
+  errorCatcher(
+    async (
+      req: RequestBodyValidatedRequest<z.infer<typeof VerifyEmailRequestBody>>,
+      res,
+      next
+    ) => {
       let { email, verificationCode } = req.body;
 
       const user = await User.findOne({ email });
@@ -154,47 +156,34 @@ UserRouter.post(
         message: "email verified successfully",
         data: {},
       });
-    } catch (error) {
-      next(error);
     }
-  }
+  )
 );
 
 UserRouter.get(
   "/profile",
   authVerification,
-  async (req: UserRequest, res, next) => {
-    try {
-      if (!req.user.emailVerified) {
-        res.status(400).json({
-          success: false,
-          code: "emailNotVerified",
-          message: "email not verified",
-          data: {},
-        });
-        return;
-      }
-
-      res.json({
-        success: true,
-        message: "profile fetched successfully",
-        data: UserRouterProfileSerializer(req.user),
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  errorCatcher(async (req: UserRequest, res, next) => {
+    res.json({
+      success: true,
+      message: "profile fetched successfully",
+      data: UserRouterProfileSerializer(req.user),
+      code: "profileFetched",
+    });
+  })
 );
 
 UserRouter.post(
   "/forgotPassword",
   requestBodyValidation(ForgotPasswordRequestBody),
-  async (
-    req: RequestBodyValidatedRequest<z.infer<typeof ForgotPasswordRequestBody>>,
-    res,
-    next
-  ) => {
-    try {
+  errorCatcher(
+    async (
+      req: RequestBodyValidatedRequest<
+        z.infer<typeof ForgotPasswordRequestBody>
+      >,
+      res,
+      next
+    ) => {
       const { email } = req.body;
 
       const user = await User.findOne({ email });
@@ -216,21 +205,21 @@ UserRouter.post(
         message: "forgot password verification code sent successfully",
         data: {},
       });
-    } catch (error) {
-      next(error);
     }
-  }
+  )
 );
 
 UserRouter.post(
   "/changePassword",
   requestBodyValidation(ChangePasswordRequestBody),
-  async (
-    req: RequestBodyValidatedRequest<z.infer<typeof ChangePasswordRequestBody>>,
-    res,
-    next
-  ) => {
-    try {
+  errorCatcher(
+    async (
+      req: RequestBodyValidatedRequest<
+        z.infer<typeof ChangePasswordRequestBody>
+      >,
+      res,
+      next
+    ) => {
       const { email, verificationCode, password } = req.body;
 
       const user = await User.findOne({ email });
@@ -271,10 +260,48 @@ UserRouter.post(
         message: "password changed successfully",
         data: {},
       });
-    } catch (error) {
-      next(error);
     }
-  }
+  )
+);
+
+UserRouter.put(
+  "/edit",
+  json({ limit: "10mb" }),
+  authVerification,
+  requestBodyValidation(UserEditRequestBody),
+  errorCatcher(
+    async (
+      req: RequestBodyValidatedUserRequest<z.infer<typeof UserEditRequestBody>>,
+      res,
+      next
+    ) => {
+      const { firstName, lastName, email } = req.body;
+      const password = req.body?.password;
+      const image = req.body?.image;
+      const user = req.user;
+
+      let responseCode = "userEdited";
+
+      user.firstName = firstName;
+      user.lastName = lastName;
+      if (user.email !== email) {
+        await user.setVerificationCode();
+        await sendVerificationEmail(email, user.verificationCode);
+        responseCode = "emailChanged";
+      }
+      user.email = email;
+      if (password) await user.changePassword(password);
+      if (image) user.image = image;
+      await user.save();
+
+      res.json({
+        success: true,
+        message: "user edited successfully",
+        data: UserRouterProfileSerializer(user),
+        code: responseCode,
+      });
+    }
+  )
 );
 
 export default UserRouter;

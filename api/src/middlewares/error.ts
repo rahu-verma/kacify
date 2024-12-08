@@ -1,7 +1,4 @@
-import {
-  ErrorRequestHandler,
-  RequestHandler
-} from "express";
+import { ErrorRequestHandler, RequestHandler } from "express";
 import { sendErrorEmail } from "../utils/email";
 import { logError } from "../utils/logger";
 
@@ -24,10 +21,8 @@ export const errorHandler: ErrorRequestHandler = async (
   }
 };
 
-export const notFoundHandler: RequestHandler = (req, res, next) => {
-  res.status(404).json({
-    success: false,
-    message: "route not found",
-    data: {},
-  });
-};
+export const errorCatcher =
+  (fn: RequestHandler): RequestHandler =>
+  (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };

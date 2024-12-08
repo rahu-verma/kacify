@@ -1,13 +1,15 @@
 import mongoose from "mongoose";
 import app from "./app";
-import env from "./utils/env";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const init = async () => {
-  await mongoose.connect(env.MONGODB_URI, {
+  await mongoose.connect(process.env.MONGODB_URI, {
     autoIndex: true,
   });
-  app.listen(env.PORT, () => {
-    console.log(`Server is running on http://localhost:${env.PORT}`);
+  app.listen(process.env.PORT, () => {
+    console.log(`Server is running on http://localhost:${process.env.PORT}`);
   });
 };
 

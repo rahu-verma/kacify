@@ -5,7 +5,7 @@ import isEmail from "validator/lib/isEmail";
 import { hashPassword } from "../utils/bcrypt";
 import { PermissionModelName } from "./permission";
 
-export type UserType = "admin" | "user" | "superuser";
+export type Role = "admin" | "user" | "superuser";
 
 export interface TUser extends Document {
   _id: string;
@@ -22,8 +22,9 @@ export interface TUser extends Document {
   changePassword: (password: string) => Promise<void>;
   comparePassword: (password: string) => boolean;
   image: string;
-  userType: UserType;
+  role: Role;
   permissions: string[];
+  setVerificationCode: () => Promise<void>;
 }
 
 const schema = new Schema<TUser>({
@@ -68,10 +69,15 @@ const schema = new Schema<TUser>({
     type: String,
     default: null,
     validate: {
-      validator: (v) => isAlphanumeric(v) || v.length === 0 || v === null,
+      validator: (v) =>
+        /^data:image\/(jpeg|png|gif|bmp|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(
+          v
+        ) ||
+        v.length === 0 ||
+        v === null,
     },
   },
-  userType: {
+  role: {
     type: String,
     enum: ["admin", "user", "superuser"],
     default: "user",
@@ -123,6 +129,12 @@ schema.methods.changePassword = async function (password: string) {
 
 schema.methods.comparePassword = function (password: string) {
   return compareSync(password, this.password);
+};
+
+schema.methods.setVerificationCode = async function () {
+  this.verificationCode = Math.floor(100000 + Math.random() * 900000);
+  this.emailVerified = false;
+  await this.save();
 };
 
 export const UserModelName = "User";

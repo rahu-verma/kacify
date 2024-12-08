@@ -1,8 +1,9 @@
 import { NextFunction, RequestHandler, Response } from "express";
 import { JwtPayload } from "jsonwebtoken";
-import User, { UserType } from "../models/user";
+import User, { Role } from "../models/user";
 import { decodeJwt } from "../utils/jwt";
 import { UserRequest } from "../utils/types";
+import { UserRouterProfileSerializer } from "../utils/serializers";
 
 export const authVerification = async (
   req: UserRequest,
@@ -46,6 +47,14 @@ export const authVerification = async (
       });
       return;
     }
+    if(!user.emailVerified){
+      res.status(401).json({
+        success: false,
+        message: "email not verified",
+        data: UserRouterProfileSerializer(user),
+      });
+      return;
+    }
     req.user = user;
     next();
   } catch (error) {
@@ -77,10 +86,10 @@ export const permissionVerification = (
   };
 };
 
-export const userVerification = (userType: UserType): RequestHandler => {
+export const userVerification = (role: Role): RequestHandler => {
   return async (req: UserRequest, res: Response, next: NextFunction) => {
     try {
-      if (req.user.userType !== userType) {
+      if (req.user.role !== role) {
         res.status(403).json({
           success: false,
           message: "permission denied",

@@ -1,4 +1,20 @@
+import { TProduct } from "../models/product";
 import { TUser } from "../models/user";
+import { ProductRouterSerializerSchema } from "./zod";
+
+export const ProductRouterSerializer = (product: TProduct) => {
+  const data = {
+    _id: product._id,
+    name: product.name,
+    price: product.price,
+    image: product.image,
+  };
+  const results = ProductRouterSerializerSchema.safeParse(data);
+  if (!results.success) return null;
+  return {
+    product: results.data,
+  };
+};
 
 export const UserRouterProfileSerializer = (user: TUser) => {
   return {
@@ -8,7 +24,8 @@ export const UserRouterProfileSerializer = (user: TUser) => {
       lastName: user.lastName,
       image: user.image,
       email: user.email,
-      userType: user.userType,
+      role: user.role,
+      emailVerified: user.emailVerified,
     },
   };
 };

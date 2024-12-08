@@ -1,10 +1,12 @@
 import { Router } from "express";
 import Product from "../models/product";
+import { errorCatcher } from "../middlewares/error";
 
 const ProductRouter = Router();
 
-ProductRouter.get("/", async (req, res, next) => {
-  try {
+ProductRouter.get(
+  "/",
+  errorCatcher(async (req, res, next) => {
     const products = await Product.find({}).select("-__v");
     res.json({
       success: true,
@@ -12,9 +14,7 @@ ProductRouter.get("/", async (req, res, next) => {
       code: "productsFetched",
       data: { products },
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  })
+);
 
 export default ProductRouter;
