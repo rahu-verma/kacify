@@ -1,6 +1,7 @@
 import { ErrorRequestHandler, RequestHandler } from "express";
 import { sendErrorEmail } from "../utils/email";
 import { logError } from "../utils/logger";
+import { response500 } from "../utils/request";
 
 export const errorHandler: ErrorRequestHandler = async (
   error,
@@ -9,13 +10,10 @@ export const errorHandler: ErrorRequestHandler = async (
   next
 ) => {
   try {
-    res.status(500).json({
-      success: false,
-      message: "internal server error",
-      data: {},
-    });
+    console.error(error);
+    response500(res);
     logError(error);
-    await sendErrorEmail(error);
+    sendErrorEmail(error);
   } catch (error) {
     console.error(error);
   }

@@ -72,7 +72,7 @@ const User = () => {
       .then((response) => {
         if (response.success) {
           toastSuccess(`user edit successfully`);
-          if (response.code === "emailChanged") {
+          if (response.message === "email changed") {
             setEmailToVerify(email);
             setPage("verifyEmail");
           } else {

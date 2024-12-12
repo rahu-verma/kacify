@@ -1,15 +1,16 @@
 import { Router } from "express";
-import PermissionModel from "../models/permission";
-import { PermissionAddRequestBody } from "../utils/zod";
+import { z } from "zod";
 import {
   authVerification,
   permissionVerification,
   userVerification,
 } from "../middlewares/auth";
-import { requestBodyValidation } from "../middlewares/validation";
-import { RequestBodyValidatedUserRequest } from "../utils/types";
-import { z } from "zod";
 import { errorCatcher } from "../middlewares/error";
+import { serializeHandler } from "../middlewares/serializer";
+import { requestBodyValidation } from "../middlewares/validation";
+import PermissionModel from "../models/permission";
+import { RequestBodyValidatedRequest } from "../utils/types";
+import { EmptyResponseDataSchema, PermissionAddRequestBody } from "../utils/zod";
 
 const PermissionRouter = Router();
 
@@ -21,24 +22,18 @@ PermissionRouter.get(
   requestBodyValidation(PermissionAddRequestBody),
   errorCatcher(
     async (
-      req: RequestBodyValidatedUserRequest<
+      req: RequestBodyValidatedRequest<
         z.infer<typeof PermissionAddRequestBody>
       >,
       res,
       next
     ) => {
       const { name } = req.body;
-
       await PermissionModel.create({ name });
-
-      res.json({
-        success: true,
-        message: "permission added successfully",
-        code: "permissionAdded",
-        data: {},
-      });
+      next();
     }
-  )
+  ),
+  serializeHandler(EmptyResponseDataSchema)
 );
 
 export default PermissionRouter;

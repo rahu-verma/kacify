@@ -1,6 +1,6 @@
 import { compareSync } from "bcrypt";
 import { Document, Schema, Types, model } from "mongoose";
-import { isAlphanumeric, isStrongPassword } from "validator";
+import { isStrongPassword } from "validator";
 import isEmail from "validator/lib/isEmail";
 import { hashPassword } from "../utils/bcrypt";
 import { PermissionModelName } from "./permission";
@@ -25,6 +25,8 @@ export interface TUser extends Document {
   role: Role;
   permissions: string[];
   setVerificationCode: () => Promise<void>;
+  verifyVerificationCode: (code: number) => Promise<boolean>;
+  refresh: () => Promise<TUser>;
 }
 
 const schema = new Schema<TUser>({
@@ -70,11 +72,11 @@ const schema = new Schema<TUser>({
     default: null,
     validate: {
       validator: (v) =>
+        v === null ||
+        v.length === 0 ||
         /^data:image\/(jpeg|png|gif|bmp|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(
           v
-        ) ||
-        v.length === 0 ||
-        v === null,
+        ),
     },
   },
   role: {
@@ -135,6 +137,20 @@ schema.methods.setVerificationCode = async function () {
   this.verificationCode = Math.floor(100000 + Math.random() * 900000);
   this.emailVerified = false;
   await this.save();
+};
+
+schema.methods.verifyVerificationCode = async function (code: number) {
+  if (this.verificationCode === code) {
+    await this.verifyEmail();
+    return true;
+  }
+  return false;
+};
+
+schema.methods.refresh = async function () {
+  const refreshedUser = await User.findById(this._id);
+  this.set(refreshedUser);
+  return refreshedUser;
 };
 
 export const UserModelName = "User";

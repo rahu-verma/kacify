@@ -41,7 +41,7 @@ export const UserProvider = ({ children }) => {
     getUserProfile().then((response) => {
       if (response.data?.user) setUser(response.data.user);
 
-      if (response.code === "emailNotVerified") {
+      if (!response.success) {
         toastError(`failed to get user profile: ${response.message}`);
       }
 

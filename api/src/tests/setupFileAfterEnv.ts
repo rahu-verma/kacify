@@ -1,15 +1,6 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-
-dotenv.config({
-  path: ".env.test",
-});
+import { env } from "process";
 
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGODB_URI);
-  await new Promise((r) => setTimeout(r, 1000));
-});
-
-afterAll(async () => {
-  await mongoose.connection.close();
+  await mongoose.connect(env.TEST_MONGODB_URI!);
 });

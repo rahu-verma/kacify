@@ -5,5 +5,6 @@ module.exports = {
     "^.+.tsx?$": ["ts-jest", {}],
   },
   setupFiles: ["<rootDir>/src/tests/setupFile.ts"],
+  testMatch: ["<rootDir>/src/**/*.test.ts"],
   setupFilesAfterEnv: ["<rootDir>/src/tests/setupFileAfterEnv.ts"],
 };

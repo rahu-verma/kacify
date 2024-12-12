@@ -31,7 +31,7 @@ export const sendVerificationEmail = async (
 
 export const sendErrorEmail = async (error: Error) => {
   await sendEmail(
-    env.EMAIL_ADDRESS,
+    env.EMAIL_ADDRESS!,
     "Kacify API error",
     JSON.stringify({
       error: error?.message,
@@ -47,6 +47,17 @@ export const sendForgotPasswordEmail = async (
   await sendEmail(
     to,
     "Kacify forgot password verification",
+    `Your verification code is: ${verificationCode}`
+  );
+};
+
+export const sendVerificationUpdateEmail = async (
+  to: string,
+  verificationCode: number
+) => {
+  await sendEmail(
+    to,
+    "Kacify update email verification",
     `Your verification code is: ${verificationCode}`
   );
 };

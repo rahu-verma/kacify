@@ -1,26 +1,30 @@
 import { json, Router } from "express";
 import { z } from "zod";
 import { authVerification } from "../middlewares/auth";
+import { errorCatcher } from "../middlewares/error";
+import { serializeHandler } from "../middlewares/serializer";
 import { requestBodyValidation } from "../middlewares/validation";
 import User from "../models/user";
-import { sendForgotPasswordEmail, sendVerificationEmail } from "../utils/email";
+import {
+  sendForgotPasswordEmail,
+  sendVerificationEmail,
+  sendVerificationUpdateEmail,
+} from "../utils/email";
 import { encodeJwt } from "../utils/jwt";
 import { createUser } from "../utils/mongoose";
-import { UserRouterProfileSerializer } from "../utils/serializers";
+import { response400, response401 } from "../utils/request";
+import { RequestBodyValidatedRequest } from "../utils/types";
 import {
-  RequestBodyValidatedRequest,
-  RequestBodyValidatedUserRequest,
-  UserRequest,
-} from "../utils/types";
-import {
+  AuthTokenSerializerSchema,
   ChangePasswordRequestBody,
+  EmptyResponseDataSchema,
   ForgotPasswordRequestBody,
   LoginRequestBody,
   RegisterRequestBody,
   UserEditRequestBody,
+  UserSerializerSchema,
   VerifyEmailRequestBody,
 } from "../utils/zod";
-import { errorCatcher } from "../middlewares/error";
 
 const UserRouter = Router();
 
@@ -37,27 +41,22 @@ UserRouter.post(
 
       const foundEmail = await User.findOne({ email });
       if (foundEmail) {
-        res.status(400).json({
-          success: false,
-          code: "emailAlreadyExists",
+        response400(res, {
           message: "email already exists",
-          data: {},
         });
         return;
       }
 
       const user = await createUser(firstName, lastName, email, password);
 
-      await sendVerificationEmail(email, user.verificationCode);
+      if (user.verificationCode) {
+        await sendVerificationEmail(email, user.verificationCode);
+      }
 
-      res.json({
-        success: true,
-        code: "userRegistered",
-        message: "user registered successfully",
-        data: {},
-      });
+      next();
     }
-  )
+  ),
+  serializeHandler(EmptyResponseDataSchema)
 );
 
 UserRouter.post(
@@ -73,47 +72,28 @@ UserRouter.post(
 
       const user = await User.findOne({ email });
       if (!user) {
-        res.status(400).json({
-          success: false,
-          code: "emailNotFound",
-          message: "email not found",
-          data: {},
-        });
-        return;
-      }
-
-      if (!user.emailVerified) {
-        res.status(400).json({
-          success: false,
-          code: "emailNotVerified",
-          message: "email not verified",
-          data: {},
-        });
+        response401(res);
         return;
       }
 
       if (!user.comparePassword(password)) {
-        res.status(400).json({
-          success: false,
-          code: "passwordIncorrect",
-          message: "password incorrect",
-          data: {},
+        response401(res);
+        return;
+      }
+
+      if (!user.emailVerified) {
+        response400(res, {
+          message: "email not verified",
         });
         return;
       }
 
-      const authToken = encodeJwt({ _id: user._id });
+      req.data = { authToken: encodeJwt({ _id: user._id }) };
 
-      res.json({
-        success: true,
-        code: "userLoggedIn",
-        message: "user login successfully",
-        data: {
-          authToken,
-        },
-      });
+      next();
     }
-  )
+  ),
+  serializeHandler(AuthTokenSerializerSchema)
 );
 
 UserRouter.post(
@@ -129,48 +109,29 @@ UserRouter.post(
 
       const user = await User.findOne({ email });
       if (!user) {
-        res.status(400).json({
-          success: false,
-          code: "emailNotFound",
-          message: "email not found",
-          data: {},
-        });
+        response400(res);
         return;
       }
 
-      if (verificationCode !== user.verificationCode) {
-        res.status(400).json({
-          success: false,
-          code: "invalidVerificationCode",
-          message: "invalid verification code",
-          data: {},
-        });
+      if (!(await user.verifyVerificationCode(verificationCode))) {
+        response400(res);
         return;
       }
 
-      await user.verifyEmail();
-
-      res.json({
-        success: true,
-        code: "emailVerified",
-        message: "email verified successfully",
-        data: {},
-      });
+      next();
     }
-  )
+  ),
+  serializeHandler(EmptyResponseDataSchema)
 );
 
 UserRouter.get(
   "/profile",
   authVerification,
-  errorCatcher(async (req: UserRequest, res, next) => {
-    res.json({
-      success: true,
-      message: "profile fetched successfully",
-      data: UserRouterProfileSerializer(req.user),
-      code: "profileFetched",
-    });
-  })
+  errorCatcher(async (req, res, next) => {
+    req.data = req.user;
+    next();
+  }),
+  serializeHandler(UserSerializerSchema)
 );
 
 UserRouter.post(
@@ -188,25 +149,22 @@ UserRouter.post(
 
       const user = await User.findOne({ email });
       if (!user) {
-        res.status(400).json({
-          success: false,
-          code: "emailNotFound",
-          message: "email not found",
-          data: {},
-        });
+        response400(res);
         return;
       }
 
       await user.setForgotPasswordVerificationCode();
-      await sendForgotPasswordEmail(email, user.forgotPasswordVerificationCode);
+      if (user.forgotPasswordVerificationCode) {
+        await sendForgotPasswordEmail(
+          email,
+          user.forgotPasswordVerificationCode
+        );
+      }
 
-      res.json({
-        success: true,
-        message: "forgot password verification code sent successfully",
-        data: {},
-      });
+      next();
     }
-  )
+  ),
+  serializeHandler(EmptyResponseDataSchema)
 );
 
 UserRouter.post(
@@ -224,44 +182,22 @@ UserRouter.post(
 
       const user = await User.findOne({ email });
       if (!user) {
-        res.status(400).json({
-          success: false,
-          code: "emailNotFound",
-          message: "email not found",
-          data: {},
-        });
+        response400(res);
         return;
       }
 
       if (verificationCode !== user.forgotPasswordVerificationCode) {
-        res.status(400).json({
-          success: false,
-          code: "invalidVerificationCode",
-          message: "invalid verification code",
-          data: {},
-        });
+        response400(res);
         return;
       }
 
-      if (user.comparePassword(password)) {
-        res.status(400).json({
-          success: false,
-          code: "passwordSame",
-          message: "password same as previous",
-          data: {},
-        });
-        return;
-      }
-
+      await user.clearForgotPasswordVerificationCode();
       await user.changePassword(password);
 
-      res.json({
-        success: true,
-        message: "password changed successfully",
-        data: {},
-      });
+      next();
     }
-  )
+  ),
+  serializeHandler(EmptyResponseDataSchema)
 );
 
 UserRouter.put(
@@ -271,7 +207,7 @@ UserRouter.put(
   requestBodyValidation(UserEditRequestBody),
   errorCatcher(
     async (
-      req: RequestBodyValidatedUserRequest<z.infer<typeof UserEditRequestBody>>,
+      req: RequestBodyValidatedRequest<z.infer<typeof UserEditRequestBody>>,
       res,
       next
     ) => {
@@ -280,28 +216,25 @@ UserRouter.put(
       const image = req.body?.image;
       const user = req.user;
 
-      let responseCode = "userEdited";
-
-      user.firstName = firstName;
-      user.lastName = lastName;
-      if (user.email !== email) {
+      if (firstName) user.firstName = firstName;
+      if (lastName) user.lastName = lastName;
+      if (email && user.email !== email) {
         await user.setVerificationCode();
-        await sendVerificationEmail(email, user.verificationCode);
-        responseCode = "emailChanged";
+        if (user.verificationCode) {
+          await sendVerificationUpdateEmail(email, user.verificationCode);
+        }
+        user.email = email;
       }
-      user.email = email;
       if (password) await user.changePassword(password);
       if (image) user.image = image;
       await user.save();
 
-      res.json({
-        success: true,
-        message: "user edited successfully",
-        data: UserRouterProfileSerializer(user),
-        code: responseCode,
-      });
+      req.data = user;
+
+      next();
     }
-  )
+  ),
+  serializeHandler(UserSerializerSchema)
 );
 
 export default UserRouter;

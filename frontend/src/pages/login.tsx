@@ -45,7 +45,7 @@ const Login = () => {
           setPage("profile");
           refreshUser();
         } else {
-          if (response.code === "emailNotVerified") {
+          if (response.message === "email not verified") {
             setPage("verifyEmail");
           }
           toastError(`user login failed: ${response.message}`);

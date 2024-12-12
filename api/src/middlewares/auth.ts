@@ -1,105 +1,54 @@
-import { NextFunction, RequestHandler, Response } from "express";
 import { JwtPayload } from "jsonwebtoken";
 import User, { Role } from "../models/user";
 import { decodeJwt } from "../utils/jwt";
-import { UserRequest } from "../utils/types";
-import { UserRouterProfileSerializer } from "../utils/serializers";
+import { errorCatcher } from "./error";
+import { response401, response403 } from "../utils/request";
 
-export const authVerification = async (
-  req: UserRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const authToken = req.headers.authorization;
-    if (!authToken) {
-      res.status(401).json({
-        success: false,
-        message: "not authenticated",
-        data: {},
-      });
-      return;
-    }
-    const decodedJwt = decodeJwt(authToken);
-    if (!decodedJwt) {
-      res.status(401).json({
-        success: false,
-        message: "not authenticated",
-        data: {},
-      });
-      return;
-    }
-    const userId = (decodedJwt as JwtPayload)?._id;
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        message: "not authenticated",
-        data: {},
-      });
-      return;
-    }
-    const user = await User.findById(userId);
-    if (!user) {
-      res.status(401).json({
-        success: false,
-        message: "not authenticated",
-        data: {},
-      });
-      return;
-    }
-    if(!user.emailVerified){
-      res.status(401).json({
-        success: false,
-        message: "email not verified",
-        data: UserRouterProfileSerializer(user),
-      });
-      return;
-    }
-    req.user = user;
-    next();
-  } catch (error) {
-    next(error);
+export const authVerification = errorCatcher(async (req, res, next) => {
+  const authToken = req.headers.authorization;
+  if (!authToken) {
+    response401(res);
+    return;
   }
+  const decodedJwt = decodeJwt(authToken);
+  const userId = (decodedJwt as JwtPayload)["_id"];
+  if (!userId) {
+    response401(res);
+    return;
+  }
+  const user = await User.findById(userId);
+  if (!user) {
+    response401(res);
+    return;
+  }
+  if (!user.emailVerified) {
+    response401(res, { message: "email not verified" });
+    return;
+  }
+  req.user = user;
+  next();
+});
+
+export const permissionVerification = (permissions: string[]) => {
+  return errorCatcher(async (req, res, next) => {
+    if (
+      !permissions.every((permission) =>
+        req.user.permissions.includes(permission)
+      )
+    ) {
+      response403(res);
+      return;
+    }
+    next();
+  });
 };
 
-export const permissionVerification = (
-  permissions: string[]
-): RequestHandler => {
-  return async (req: UserRequest, res: Response, next: NextFunction) => {
-    try {
-      if (
-        !permissions.every((permission) =>
-          req.user.permissions.includes(permission)
-        )
-      ) {
-        res.status(403).json({
-          success: false,
-          message: "permission denied",
-          data: {},
-        });
-        return;
-      }
-      next();
-    } catch (error) {
-      next(error);
+export const userVerification = (role: Role) => {
+  return errorCatcher(async (req, res, next) => {
+    if (req.user.role !== role) {
+      response403(res);
+      return;
     }
-  };
-};
-
-export const userVerification = (role: Role): RequestHandler => {
-  return async (req: UserRequest, res: Response, next: NextFunction) => {
-    try {
-      if (req.user.role !== role) {
-        res.status(403).json({
-          success: false,
-          message: "permission denied",
-          data: {},
-        });
-        return;
-      }
-      next();
-    } catch (error) {
-      next(error);
-    }
-  };
+    next();
+  });
 };

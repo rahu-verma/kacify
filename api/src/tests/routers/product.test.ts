@@ -1,17 +1,40 @@
 import supertest from "supertest";
 import app from "../../app";
-import axios from "axios";
-import { baseUrl } from "../setupFile";
+import Product from "../../models/product";
 
-describe("/", () => {
-  it("valid request", async () => {
-    // const response = await supertest(app).get("/product/");
-    // console.log(response.body);
-    // expect(response.status).toBe(200);
+describe("/product/", () => {
+  it("products exist", async () => {
+    await Product.deleteMany({});
+    await Product.create({ name: "product1", price: 100, image: "image1" });
+    const response = await supertest(app).get("/product/");
+    expect(response.body).toEqual({
+      success: true,
+      code: "success",
+      message: "success",
+      status: 200,
+      data: {
+        products: [
+          {
+            _id: expect.any(String),
+            name: "product1",
+            price: 100,
+            image: "image1",
+          },
+        ],
+      },
+    });
   });
-  it("externally", async () => {
-    axios.get(`${baseUrl}/product/`).catch((error) => {
-      console.log(error.response.data);
+  it("products not exist", async () => {
+    await Product.deleteMany({});
+    const response = await supertest(app).get("/product/");
+    expect(response.body).toEqual({
+      success: true,
+      code: "success",
+      message: "success",
+      status: 200,
+      data: {
+        products: [],
+      },
     });
   });
 });
