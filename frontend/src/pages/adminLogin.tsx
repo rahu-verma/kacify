@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { registerUser } from "../utils/api";
+import { loginAdmin, loginUser } from "../utils/api";
+import { storeAuthToken } from "../utils/localStorage";
 import { useNavigate } from "react-router";
 
-const Register = () => {
+const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   return (
     <div>
-      <h1>Register</h1>
+      <h1>Admin Login</h1>
       <input
         type="text"
         placeholder="email"
@@ -22,17 +23,19 @@ const Register = () => {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button
-        onClick={async () => {
+        onClick={() => {
           if (!email || !password) {
             alert("Email and password are required");
             return;
           }
-          const response = await registerUser(email, password);
-          if (response.message === "userCreated") {
-            navigate("/login");
-          } else {
-            alert(response.message);
-          }
+          loginAdmin(email, password).then((response) => {
+            if (response.success) {
+              storeAuthToken(response.data);
+              navigate("/profile");
+            } else {
+              alert(response.message);
+            }
+          });
         }}
       >
         submit
@@ -41,4 +44,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default AdminLogin;

@@ -1,17 +1,17 @@
 import { RequestHandler } from "express";
 import { ZodSchema } from "zod";
-import { errorCatcher } from "./error";
-import { response400 } from "../utils/request";
 
-export const requestBodyValidation = (schema: ZodSchema): RequestHandler => {
-  return errorCatcher(async (req, res, next) => {
-    const results = schema.safeParse(req.body);
-    if (!results.success) {
-      response400(res, {
-        data: results.error.flatten().fieldErrors,
+export const validationHandler = (schema: ZodSchema): RequestHandler => {
+  return (req, res, next) => {
+    const parse = schema.safeParse(req.body);
+    if (!parse.success) {
+      res.status(400).json({
+        success: false,
+        message: JSON.stringify(parse.error.format()),
       });
       return;
     }
+    req.body = parse.data;
     next();
-  });
+  };
 };

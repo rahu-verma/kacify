@@ -1,7 +1,5 @@
-import { ErrorRequestHandler, RequestHandler } from "express";
-import { sendErrorEmail } from "../utils/email";
-import { logError } from "../utils/logger";
-import { response500 } from "../utils/request";
+import { ErrorRequestHandler } from "express";
+import { sendErrorEmail } from "../utils/nodemailer";
 
 export const errorHandler: ErrorRequestHandler = async (
   error,
@@ -9,18 +7,10 @@ export const errorHandler: ErrorRequestHandler = async (
   res,
   next
 ) => {
-  try {
-    console.error(error);
-    response500(res);
-    logError(error);
-    sendErrorEmail(error);
-  } catch (error) {
-    console.error(error);
-  }
+  res.json({
+    success: false,
+    message: "internal server error",
+  });
+  console.log(new Date().toISOString(), error);
+  sendErrorEmail(error.message);
 };
-
-export const errorCatcher =
-  (fn: RequestHandler): RequestHandler =>
-  (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };

@@ -6,10 +6,6 @@ export const getAuthToken = () => {
   return localStorage.getItem("kacifyAuthToken");
 };
 
-export const getAccountPage = () => {
-  return getAuthToken() ? "profile" : "login";
-};
-
-export const removeAuthToken = () => {
+export const clearAuthToken = () => {
   localStorage.removeItem("kacifyAuthToken");
 };

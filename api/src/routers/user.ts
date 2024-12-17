@@ -1,240 +1,126 @@
-import { json, Router } from "express";
+import { Router } from "express";
 import { z } from "zod";
-import { authVerification } from "../middlewares/auth";
-import { errorCatcher } from "../middlewares/error";
-import { serializeHandler } from "../middlewares/serializer";
-import { requestBodyValidation } from "../middlewares/validation";
-import User from "../models/user";
-import {
-  sendForgotPasswordEmail,
-  sendVerificationEmail,
-  sendVerificationUpdateEmail,
-} from "../utils/email";
+import { authHandler } from "../middlewares/auth";
+import { validationHandler } from "../middlewares/validation";
+import UserModel from "../models/user";
+import { comparePassword, hashPassword } from "../utils/bcrypt";
 import { encodeJwt } from "../utils/jwt";
-import { createUser } from "../utils/mongoose";
-import { response400, response401 } from "../utils/request";
-import { RequestBodyValidatedRequest } from "../utils/types";
+import { sendForgotPasswordEmail } from "../utils/nodemailer";
+import { UserRequest } from "../utils/types";
 import {
-  AuthTokenSerializerSchema,
-  ChangePasswordRequestBody,
-  EmptyResponseDataSchema,
-  ForgotPasswordRequestBody,
-  LoginRequestBody,
-  RegisterRequestBody,
-  UserEditRequestBody,
-  UserSerializerSchema,
-  VerifyEmailRequestBody,
+  ForgotPasswordRequestBodySchema,
+  LoginRequestBodySchema,
+  RegisterRequestBodySchema,
 } from "../utils/zod";
 
 const UserRouter = Router();
 
 UserRouter.post(
   "/register",
-  requestBodyValidation(RegisterRequestBody),
-  errorCatcher(
-    async (
-      req: RequestBodyValidatedRequest<z.infer<typeof RegisterRequestBody>>,
-      res,
-      next
-    ) => {
-      const { firstName, lastName, email, password } = req.body;
+  validationHandler(RegisterRequestBodySchema),
+  async (req, res, next) => {
+    try {
+      const { email, password } = req.body as z.infer<
+        typeof RegisterRequestBodySchema
+      >;
 
-      const foundEmail = await User.findOne({ email });
-      if (foundEmail) {
-        response400(res, {
-          message: "email already exists",
+      if (await UserModel.exists({ email })) {
+        res.send({
+          success: false,
+          message: "Email already exists",
         });
         return;
       }
 
-      const user = await createUser(firstName, lastName, email, password);
-
-      if (user.verificationCode) {
-        await sendVerificationEmail(email, user.verificationCode);
-      }
-
-      next();
+      await UserModel.create({ email, password: hashPassword(password) });
+      res.send({
+        success: true,
+        message: "User registered successfully",
+      });
+      return;
+    } catch (error) {
+      next(error);
     }
-  ),
-  serializeHandler(EmptyResponseDataSchema)
+  }
 );
 
 UserRouter.post(
   "/login",
-  requestBodyValidation(LoginRequestBody),
-  errorCatcher(
-    async (
-      req: RequestBodyValidatedRequest<z.infer<typeof LoginRequestBody>>,
-      res,
-      next
-    ) => {
-      const { email, password } = req.body;
+  validationHandler(LoginRequestBodySchema),
+  async (req, res, next) => {
+    try {
+      const { email, password } = req.body as z.infer<
+        typeof LoginRequestBodySchema
+      >;
 
-      const user = await User.findOne({ email });
-      if (!user) {
-        response401(res);
-        return;
-      }
-
-      if (!user.comparePassword(password)) {
-        response401(res);
-        return;
-      }
-
-      if (!user.emailVerified) {
-        response400(res, {
-          message: "email not verified",
+      const user = await UserModel.findOne({ email });
+      if (!user || !comparePassword(password, user.password)) {
+        res.send({
+          success: false,
+          message: "Invalid email or password",
         });
         return;
       }
 
-      req.data = { authToken: encodeJwt({ _id: user._id }) };
+      res.send({
+        success: true,
+        data: encodeJwt({ _id: user._id }),
+      });
 
-      next();
+      return;
+    } catch (error) {
+      next(error);
     }
-  ),
-  serializeHandler(AuthTokenSerializerSchema)
+  }
 );
 
-UserRouter.post(
-  "/verifyEmail",
-  requestBodyValidation(VerifyEmailRequestBody),
-  errorCatcher(
-    async (
-      req: RequestBodyValidatedRequest<z.infer<typeof VerifyEmailRequestBody>>,
-      res,
-      next
-    ) => {
-      let { email, verificationCode } = req.body;
-
-      const user = await User.findOne({ email });
-      if (!user) {
-        response400(res);
-        return;
-      }
-
-      if (!(await user.verifyVerificationCode(verificationCode))) {
-        response400(res);
-        return;
-      }
-
-      next();
-    }
-  ),
-  serializeHandler(EmptyResponseDataSchema)
-);
+UserRouter.get("/profile", authHandler, async (req: UserRequest, res, next) => {
+  try {
+    res.send({
+      success: true,
+      data: {
+        _id: req.user?._id,
+        email: req.user?.email,
+      },
+    });
+    return;
+  } catch (error) {
+    next(error);
+  }
+});
 
 UserRouter.get(
-  "/profile",
-  authVerification,
-  errorCatcher(async (req, res, next) => {
-    req.data = req.user;
-    next();
-  }),
-  serializeHandler(UserSerializerSchema)
-);
-
-UserRouter.post(
   "/forgotPassword",
-  requestBodyValidation(ForgotPasswordRequestBody),
-  errorCatcher(
-    async (
-      req: RequestBodyValidatedRequest<
-        z.infer<typeof ForgotPasswordRequestBody>
-      >,
-      res,
-      next
-    ) => {
-      const { email } = req.body;
+  validationHandler(ForgotPasswordRequestBodySchema),
+  async (req, res, next) => {
+    try {
+      const { email } = req.body as z.infer<
+        typeof ForgotPasswordRequestBodySchema
+      >;
 
-      const user = await User.findOne({ email });
+      const user = await UserModel.findOne({ email });
       if (!user) {
-        response400(res);
+        res.send({
+          success: false,
+          message: "User not found",
+        });
         return;
       }
 
-      await user.setForgotPasswordVerificationCode();
-      if (user.forgotPasswordVerificationCode) {
-        await sendForgotPasswordEmail(
-          email,
-          user.forgotPasswordVerificationCode
-        );
-      }
-
-      next();
-    }
-  ),
-  serializeHandler(EmptyResponseDataSchema)
-);
-
-UserRouter.post(
-  "/changePassword",
-  requestBodyValidation(ChangePasswordRequestBody),
-  errorCatcher(
-    async (
-      req: RequestBodyValidatedRequest<
-        z.infer<typeof ChangePasswordRequestBody>
-      >,
-      res,
-      next
-    ) => {
-      const { email, verificationCode, password } = req.body;
-
-      const user = await User.findOne({ email });
-      if (!user) {
-        response400(res);
-        return;
-      }
-
-      if (verificationCode !== user.forgotPasswordVerificationCode) {
-        response400(res);
-        return;
-      }
-
-      await user.clearForgotPasswordVerificationCode();
-      await user.changePassword(password);
-
-      next();
-    }
-  ),
-  serializeHandler(EmptyResponseDataSchema)
-);
-
-UserRouter.put(
-  "/edit",
-  json({ limit: "10mb" }),
-  authVerification,
-  requestBodyValidation(UserEditRequestBody),
-  errorCatcher(
-    async (
-      req: RequestBodyValidatedRequest<z.infer<typeof UserEditRequestBody>>,
-      res,
-      next
-    ) => {
-      const { firstName, lastName, email } = req.body;
-      const password = req.body?.password;
-      const image = req.body?.image;
-      const user = req.user;
-
-      if (firstName) user.firstName = firstName;
-      if (lastName) user.lastName = lastName;
-      if (email && user.email !== email) {
-        await user.setVerificationCode();
-        if (user.verificationCode) {
-          await sendVerificationUpdateEmail(email, user.verificationCode);
-        }
-        user.email = email;
-      }
-      if (password) await user.changePassword(password);
-      if (image) user.image = image;
+      user.forgotPasswordToken = Math.floor(Math.random() * 1000000);
       await user.save();
 
-      req.data = user;
+      await sendForgotPasswordEmail(user.email, user.forgotPasswordToken);
+      res.json({
+        success: true,
+        message: "Password reset link sent to your email",
+      });
 
-      next();
+      return;
+    } catch (error) {
+      next(error);
     }
-  ),
-  serializeHandler(UserSerializerSchema)
+  }
 );
 
 export default UserRouter;

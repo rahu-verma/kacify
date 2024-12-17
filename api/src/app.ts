@@ -1,34 +1,51 @@
 import cors from "cors";
 import express from "express";
+import mongoose from "mongoose";
+import morgan from "morgan";
+import dotenv from "dotenv";
 import ProductRouter from "./routers/product";
 import UserRouter from "./routers/user";
-import env from "./utils/env";
-import morgan from "morgan";
 import { errorHandler } from "./middlewares/error";
-import PermissionRouter from "./routers/permission";
-import rateLimit from "express-rate-limit";
 import { notFoundHandler } from "./middlewares/general";
+import AdminRouter from "./routers/admin";
+
+dotenv.config();
 
 const app = express();
 
-app.use(rateLimit({ windowMs: 1000, limit: 10 }));
 app.use(morgan("dev"));
-app.use(cors({ origin: env.CORS_ORIGIN }));
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
 app.use(express.json());
-
-app.get("/version", (req, res) => {
-  res.json({
-    success: true,
-    message: "1.0.0",
-    data: {},
-  });
-});
 
 app.use("/product", ProductRouter);
 app.use("/user", UserRouter);
-app.use("/permission", PermissionRouter);
-
+app.use("/admin", AdminRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-export default app;
+const init = async () => {
+  const requiredEnvVariables = [
+    "PORT",
+    "MONGODB_URI",
+    "CORS_ORIGIN",
+    "JWT_SECRET",
+    "EMAIL_HOST",
+    "EMAIL_ADDRESS",
+    "EMAIL_PASSWORD",
+    "EMAIL_PORT",
+    "FRONTEND_URL",
+  ];
+  for (const envVar of requiredEnvVariables) {
+    if (!process.env[envVar]) {
+      process.exit(1);
+    }
+  }
+  await mongoose.connect(process.env.MONGODB_URI!, {
+    autoIndex: true,
+  });
+  app.listen(process.env.PORT, () => {
+    console.log(`Server is running on http://localhost:${process.env.PORT}`);
+  });
+};
+
+init();

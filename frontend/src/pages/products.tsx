@@ -1,37 +1,26 @@
-import { useEffect } from "react";
-import { useProductContext } from "../context/product";
-import { useLoaderContext } from "../context/loader";
+import { useEffect, useState } from "react";
+import { fetchProducts } from "../utils/api";
+import { ProductType } from "../../../api/src/utils/types";
 
 const Products = () => {
-  const { products, isLoading } = useProductContext();
-  const { setShowLoader } = useLoaderContext();
-
+  const [products, setProducts] = useState<ProductType[]>([]);
   useEffect(() => {
-    setShowLoader(isLoading);
-  }, [isLoading]);
+    fetchProducts().then((response) => {
+      setProducts(response.data);
+    });
+  }, []);
 
   return (
     <div>
-      <div className="flex flex-wrap gap-5 justify-between">
-        {products?.map((product) => (
-          <div
-            key={product._id}
-            className="flex flex-col w-80 shadow-md rounded-lg overflow-hidden border-[0.5px] border-primary-light cursor-pointer hover:opacity-50 h-max"
-          >
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-80 h-72 border-b-[0.5px] border-primary-light"
-            />
-            <div className="flex justify-between items-center p-2">
-              <h3 className="uppercase text-2xl font-bold">{product.name}</h3>
-              <p className="text-2xl font-bold border-l-[0.5px] border-primary-light pl-3">
-                ${product.price}
-              </p>
-            </div>
+      {products?.map((product: any) => (
+        <div key={product._id}>
+          <img src={product.image} alt={product.name} />
+          <div>
+            <h3>{product.name}</h3>
+            <p>${product.price}</p>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 };

@@ -3,5 +3,5 @@
 
 ## Tech Stack
 - Database - MongoDB
-- API - NodeJS
+- API - ExpressJS
 - Frontend - ReactJS

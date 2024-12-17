@@ -1,21 +1,19 @@
 import { Router } from "express";
-import { errorCatcher } from "../middlewares/error";
-import { serializeHandler } from "../middlewares/serializer";
-import Product from "../models/product";
-import { ProductRouterSerializerSchema } from "../utils/zod";
+import ProductModel from "../models/product";
 
 const ProductRouter = Router();
 
-ProductRouter.get(
-  "/",
-  errorCatcher(async (req, res, next) => {
-    const products = await Product.find({}).select("-__v");
-    req.data = {
-      products,
-    };
-    next();
-  }),
-  serializeHandler(ProductRouterSerializerSchema)
-);
+ProductRouter.get("/", async (req, res, next) => {
+  try {
+    const products = await ProductModel.find({}).select("-__v");
+    res.json({
+      success: true,
+      data: products,
+    });
+    return;
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default ProductRouter;

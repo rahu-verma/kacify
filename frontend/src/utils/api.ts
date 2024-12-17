@@ -1,139 +1,64 @@
 import axios from "axios";
-import { getAuthToken } from "./authToken";
+import { getAuthToken } from "./localStorage";
 
-export type Product = {
-  _id: string;
-  name: string;
-  image: string;
-  price: number;
-};
-
-export type User = {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  image: string;
-  email: string;
-  role: "admin" | "user" | "superuser";
-  emailVerified: boolean;
-};
-
-type Response<Data> = {
+const request = async (
+  method: "GET" | "POST" | "PUT" | "DELETE",
+  url: string,
+  data: any = {}
+): Promise<{
   success: boolean;
+  data: any;
   message: string;
-  data: Data;
-  code: string;
-};
-
-const request = async <ResponseData>(
-  url: string,
-  method: "GET" | "POST" | "PUT",
-  data: Record<string, string | number> = {},
-  headers: Record<string, string> = {}
-): Promise<Response<ResponseData>> => {
-  try {
-    const response = await axios.request({
-      baseURL: process.env.REACT_APP_API_URL,
-      url,
-      method,
-      data,
-      headers,
-    });
-    return response.data;
-  } catch (error) {
-    return (
-      error?.response?.data || {
-        success: false,
-        message: "unknown error",
-        data: {},
-        code: "unknown_error",
-      }
-    );
-  }
-};
-
-const authRequest = async <ResponseData>(
-  url: string,
-  method: "GET" | "POST" | "PUT",
-  data: Record<string, string> = {}
-): Promise<Response<ResponseData>> => {
-  return await request(url, method, data, {
-    Authorization: getAuthToken(),
+}> => {
+  const response = await axios.request({
+    method,
+    baseURL: process.env.REACT_APP_API_BASE_URL,
+    url,
+    headers: {
+      Authorization: getAuthToken(),
+    },
+    data,
   });
+  return response.data;
 };
 
 export const fetchProducts = async () => {
-  return await request<{ products: Product[] }>("product", "GET");
+  return await request("GET", "/product");
 };
 
-export const registerUser = async (
-  firstName: string,
-  lastName: string,
-  email: string,
-  password: string
-) => {
-  return await request<{}>("user/register", "POST", {
-    firstName,
-    lastName,
+export const registerUser = async (email: string, password: string) => {
+  return await request("POST", "/user/register", {
     email,
     password,
   });
 };
 
 export const loginUser = async (email: string, password: string) => {
-  return await request<{ authToken: string }>("user/login", "POST", {
+  return await request("POST", "/user/login", {
     email,
     password,
-  });
-};
-
-export const verifyEmail = async (email: string, verificationCode: number) => {
-  return await request<{}>("user/verifyEmail", "POST", {
-    email,
-    verificationCode,
   });
 };
 
 export const getUserProfile = async () => {
-  return await authRequest<{ user: User }>("user/profile", "GET");
+  return await request("GET", "/user/profile");
 };
 
-export const forgotPassword = async (email: string) => {
-  return await request<{}>("user/forgotPassword", "POST", {
-    email,
-  });
+export const forgotPassword = async () => {
+  return await request("POST", "/user/profile");
 };
 
-export const changePassword = async (
-  email: string,
-  verificationCode: number,
-  password: string
-) => {
-  return await request<{}>("user/changePassword", "POST", {
+export const loginAdmin = async (email: string, password: string) => {
+  return await request("POST", "/admin/login", {
     email,
-    verificationCode,
     password,
   });
 };
 
-export const editUser = async (
-  firstName: string,
-  lastName: string,
-  email: string,
-  password?: string,
-  image?: string
-) => {
-  return await authRequest<{}>("user/edit", "PUT", {
-    firstName,
-    lastName,
-    email,
-    ...(password ? { password } : {}),
-    ...(image ? { image } : {}),
-  });
+export const getUsers = async () => {
+  return await request("GET", "/admin/users");
 };
 
-export const addPermission = async (name: string) => {
-  return await authRequest<{}>("permission/add", "POST", {
-    name,
-  });
+export const deleteUser = async (userId: string) => {
+  return await request("DELETE", `/admin/users/${userId}`);
 };
