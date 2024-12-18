@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { forgotPassword } from "../utils/api";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -13,10 +14,13 @@ const ForgotPassword = () => {
       />
       <button
         onClick={() => {
-          if (!email) {
-            alert("Email is required");
-            return;
-          }
+          forgotPassword(email).then((response) => {
+            if (!response.success) {
+              alert(response.message);
+            } else {
+              alert("Password reset email sent");
+            }
+          });
         }}
       >
         submit

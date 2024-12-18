@@ -38,17 +38,32 @@ export const authHandler: RequestHandler = async (
   next();
 };
 
-export const adminAuthHandler: RequestHandler = async (
-  req: UserRequest,
-  res,
-  next
-) => {
-  if (req.user.role !== "admin") {
-    res.send({
-      success: false,
-      message: "unauthorized",
-    });
-    return;
-  }
-  next();
-};
+export const roleHandler =
+  (roles: string[]): RequestHandler =>
+  async (req: UserRequest, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      res.send({
+        success: false,
+        message: "unauthorized",
+      });
+      return;
+    }
+    next();
+  };
+
+export const permissionHandler =
+  (permissions: string[]): RequestHandler =>
+  async (req: UserRequest, res, next) => {
+    if (
+      !permissions.every((permission) =>
+        req.user.permissions.includes(permission)
+      )
+    ) {
+      res.send({
+        success: false,
+        message: "unauthorized",
+      });
+      return;
+    }
+    next();
+  };

@@ -20,7 +20,11 @@ const schema = new Schema<UserType>({
   role: {
     type: String,
     default: "user",
-    enum: ["user", "admin"],
+    enum: ["user", "admin", "vendor"],
+  },
+  permissions: {
+    type: [String],
+    default: [],
   },
 });
 

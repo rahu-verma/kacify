@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { loginAdmin, loginUser } from "../utils/api";
-import { storeAuthToken } from "../utils/localStorage";
 import { useNavigate } from "react-router";
+import { loginAdmin } from "../utils/api";
+import { storeAuthToken } from "../utils/localStorage";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -24,10 +24,6 @@ const AdminLogin = () => {
       />
       <button
         onClick={() => {
-          if (!email || !password) {
-            alert("Email and password are required");
-            return;
-          }
           loginAdmin(email, password).then((response) => {
             if (response.success) {
               storeAuthToken(response.data);

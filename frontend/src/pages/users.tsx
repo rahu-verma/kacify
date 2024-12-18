@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { UserType } from "../../../api/src/utils/types";
-import { getUsers } from "../utils/api";
+import { deleteUser, getUsers } from "../utils/api";
 
 const Users = () => {
   const [users, setUsers] = useState<UserType[]>([]);
+  const loadUsers = async () => {
+    const response = await getUsers();
+    if (response.success) {
+      setUsers(response.data);
+    }
+  };
   useEffect(() => {
-    getUsers().then((response) => {
-      if (response.success) {
-        setUsers(response.data);
-      }
-    });
+    loadUsers();
   }, []);
   return (
     <div>
@@ -19,7 +21,13 @@ const Users = () => {
           <li key={user._id}>
             <div>
               <span>{user.email}</span>
-              <span>X</span>
+              <span
+                onClick={() => {
+                  deleteUser(user._id).then(loadUsers);
+                }}
+              >
+                X
+              </span>
             </div>
           </li>
         ))}

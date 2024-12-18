@@ -9,6 +9,7 @@ import Logout from "./pages/logout";
 import ForgotPassword from "./pages/forgotPassword";
 import AdminLogin from "./pages/adminLogin";
 import Users from "./pages/users";
+import ChangePassword from "./pages/changePassword";
 
 const root = createRoot(document.getElementById("root")!);
 
@@ -24,6 +25,7 @@ root.render(
       <Route path="/forgotPassword" element={<ForgotPassword />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/users" element={<Users />} />
+      <Route path="/changePassword" element={<ChangePassword />} />
     </Routes>
   </BrowserRouter>
 );

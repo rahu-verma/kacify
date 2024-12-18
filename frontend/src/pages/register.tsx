@@ -23,10 +23,6 @@ const Register = () => {
       />
       <button
         onClick={async () => {
-          if (!email || !password) {
-            alert("Email and password are required");
-            return;
-          }
           const response = await registerUser(email, password);
           if (response.message === "userCreated") {
             navigate("/login");

@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { z } from "zod";
-import { authHandler } from "../middlewares/auth";
-import { validationHandler } from "../middlewares/validation";
+import { authHandler, roleHandler } from "../middlewares/auth";
+import { requestBodyValidationHandler } from "../middlewares/validation";
 import UserModel from "../models/user";
 import { comparePassword, hashPassword } from "../utils/bcrypt";
 import { encodeJwt } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/nodemailer";
 import { UserRequest } from "../utils/types";
 import {
+  ChangePasswordRequestBodySchema,
   ForgotPasswordRequestBodySchema,
   LoginRequestBodySchema,
   RegisterRequestBodySchema,
@@ -17,10 +18,10 @@ const UserRouter = Router();
 
 UserRouter.post(
   "/register",
-  validationHandler(RegisterRequestBodySchema),
+  requestBodyValidationHandler(RegisterRequestBodySchema),
   async (req, res, next) => {
     try {
-      const { email, password } = req.body as z.infer<
+      const { email, password, role } = req.body as z.infer<
         typeof RegisterRequestBodySchema
       >;
 
@@ -32,7 +33,11 @@ UserRouter.post(
         return;
       }
 
-      await UserModel.create({ email, password: hashPassword(password) });
+      await UserModel.create({
+        email,
+        password: hashPassword(password),
+        role,
+      });
       res.send({
         success: true,
         message: "User registered successfully",
@@ -46,7 +51,7 @@ UserRouter.post(
 
 UserRouter.post(
   "/login",
-  validationHandler(LoginRequestBodySchema),
+  requestBodyValidationHandler(LoginRequestBodySchema),
   async (req, res, next) => {
     try {
       const { email, password } = req.body as z.infer<
@@ -57,7 +62,7 @@ UserRouter.post(
       if (!user || !comparePassword(password, user.password)) {
         res.send({
           success: false,
-          message: "Invalid email or password",
+          message: "unauthorized",
         });
         return;
       }
@@ -89,9 +94,9 @@ UserRouter.get("/profile", authHandler, async (req: UserRequest, res, next) => {
   }
 });
 
-UserRouter.get(
+UserRouter.post(
   "/forgotPassword",
-  validationHandler(ForgotPasswordRequestBodySchema),
+  requestBodyValidationHandler(ForgotPasswordRequestBodySchema),
   async (req, res, next) => {
     try {
       const { email } = req.body as z.infer<
@@ -99,10 +104,10 @@ UserRouter.get(
       >;
 
       const user = await UserModel.findOne({ email });
-      if (!user) {
+      if (!user || user.role !== "user") {
         res.send({
           success: false,
-          message: "User not found",
+          message: "unauthorized",
         });
         return;
       }
@@ -116,6 +121,88 @@ UserRouter.get(
         message: "Password reset link sent to your email",
       });
 
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.post(
+  "/changePassword",
+  requestBodyValidationHandler(ChangePasswordRequestBodySchema),
+  async (req, res, next) => {
+    try {
+      const { password, token } = req.body as z.infer<
+        typeof ChangePasswordRequestBodySchema
+      >;
+
+      const [email, forgotPasswordToken] = token.split("|");
+      const user = await UserModel.findOne({ email });
+      if (
+        !user ||
+        user.forgotPasswordToken !== parseInt(forgotPasswordToken) ||
+        user.role !== "user"
+      ) {
+        res.send({
+          success: false,
+          message: "unauthorized",
+        });
+        return;
+      }
+
+      await user.updateOne({ password: hashPassword(password) });
+
+      res.send({
+        success: true,
+        message: "Password changed successfully",
+      });
+
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.get(
+  "/users",
+  authHandler,
+  roleHandler(["admin"]),
+  async (req, res, next) => {
+    try {
+      const users = await UserModel.find({}).select("_id email");
+      res.send({
+        success: true,
+        data: users,
+      });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.delete(
+  "/user/:userId",
+  authHandler,
+  roleHandler(["admin"]),
+  async (req, res, next) => {
+    try {
+      const userId = req.params.userId;
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        res.send({
+          success: false,
+          message: "User not found",
+        });
+        return;
+      }
+      await user.deleteOne();
+      res.send({
+        success: true,
+        message: "User deleted",
+      });
       return;
     } catch (error) {
       next(error);

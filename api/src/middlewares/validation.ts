@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { ZodSchema } from "zod";
 
-export const validationHandler = (schema: ZodSchema): RequestHandler => {
+export const requestBodyValidationHandler = (schema: ZodSchema): RequestHandler => {
   return (req, res, next) => {
     const parse = schema.safeParse(req.body);
     if (!parse.success) {

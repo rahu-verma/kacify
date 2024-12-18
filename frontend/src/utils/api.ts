@@ -44,8 +44,10 @@ export const getUserProfile = async () => {
   return await request("GET", "/user/profile");
 };
 
-export const forgotPassword = async () => {
-  return await request("POST", "/user/profile");
+export const forgotPassword = async (email: string) => {
+  return await request("POST", "/user/forgotPassword", {
+    email,
+  });
 };
 
 export const loginAdmin = async (email: string, password: string) => {
@@ -60,5 +62,12 @@ export const getUsers = async () => {
 };
 
 export const deleteUser = async (userId: string) => {
-  return await request("DELETE", `/admin/users/${userId}`);
+  return await request("DELETE", `/admin/user/${userId}`);
+};
+
+export const changePassword = async (password: string, token: string) => {
+  return await request("POST", "/user/changePassword", {
+    password,
+    token,
+  });
 };

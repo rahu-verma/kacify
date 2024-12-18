@@ -24,10 +24,6 @@ const Login = () => {
       />
       <button
         onClick={() => {
-          if (!email || !password) {
-            alert("Email and password are required");
-            return;
-          }
           loginUser(email, password).then((response) => {
             if (response.success) {
               storeAuthToken(response.data);

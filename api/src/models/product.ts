@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 import { ProductType } from "../utils/types";
+import { UserModelName } from "./user";
 
 const schema = new Schema<ProductType>({
   name: {
@@ -22,6 +23,11 @@ const schema = new Schema<ProductType>({
     required: true,
     minlength: 1,
   },
+  user: {
+    type: Types.ObjectId,
+    ref: UserModelName,
+    required: true,
+  }
 });
 
 export const ProductModelName = "Product";
