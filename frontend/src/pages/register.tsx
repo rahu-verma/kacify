@@ -2,7 +2,7 @@ import { useState } from "react";
 import { registerUser } from "../utils/api";
 import { useNavigate } from "react-router";
 
-const Register = () => {
+const Register = ({ role }: { role: "user" | "vendor" }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const Register = () => {
       />
       <button
         onClick={async () => {
-          const response = await registerUser(email, password);
+          const response = await registerUser(email, password, role);
           if (response.message === "userCreated") {
             navigate("/login");
           } else {

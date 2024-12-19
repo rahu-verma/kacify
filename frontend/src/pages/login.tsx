@@ -3,7 +3,7 @@ import { loginUser } from "../utils/api";
 import { storeAuthToken } from "../utils/localStorage";
 import { useNavigate } from "react-router";
 
-const Login = () => {
+const Login = ({ role }: { role: "admin" | "user" | "vendor" }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const Login = () => {
       />
       <button
         onClick={() => {
-          loginUser(email, password).then((response) => {
+          loginUser(email, password, role).then((response) => {
             if (response.success) {
               storeAuthToken(response.data);
               navigate("/profile");

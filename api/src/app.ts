@@ -1,13 +1,12 @@
 import cors from "cors";
+import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
 import morgan from "morgan";
-import dotenv from "dotenv";
-import ProductRouter from "./routers/product";
-import UserRouter from "./routers/user";
 import { errorHandler } from "./middlewares/error";
 import { notFoundHandler } from "./middlewares/general";
-import AdminRouter from "./routers/admin";
+import ProductRouter from "./routers/product";
+import UserRouter from "./routers/user";
 
 dotenv.config();
 
@@ -15,11 +14,10 @@ const app = express();
 
 app.use(morgan("dev"));
 app.use(cors({ origin: process.env.CORS_ORIGIN }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 app.use("/product", ProductRouter);
 app.use("/user", UserRouter);
-app.use("/admin", AdminRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 

@@ -54,11 +54,11 @@ UserRouter.post(
   requestBodyValidationHandler(LoginRequestBodySchema),
   async (req, res, next) => {
     try {
-      const { email, password } = req.body as z.infer<
+      const { email, password, role } = req.body as z.infer<
         typeof LoginRequestBodySchema
       >;
 
-      const user = await UserModel.findOne({ email });
+      const user = await UserModel.findOne({ email, role });
       if (!user || !comparePassword(password, user.password)) {
         res.send({
           success: false,

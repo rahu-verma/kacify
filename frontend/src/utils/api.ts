@@ -22,21 +22,35 @@ const request = async (
   return response.data;
 };
 
-export const fetchProducts = async () => {
-  return await request("GET", "/product");
+export const fetchVendorProducts = async () => {
+  return await request("GET", "/product/vendor");
 };
 
-export const registerUser = async (email: string, password: string) => {
+export const fetchAllProducts = async () => {
+  return await request("GET", "/product/list");
+};
+
+export const registerUser = async (
+  email: string,
+  password: string,
+  role: string
+) => {
   return await request("POST", "/user/register", {
     email,
     password,
+    role,
   });
 };
 
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (
+  email: string,
+  password: string,
+  role: string
+) => {
   return await request("POST", "/user/login", {
     email,
     password,
+    role,
   });
 };
 
@@ -69,5 +83,38 @@ export const changePassword = async (password: string, token: string) => {
   return await request("POST", "/user/changePassword", {
     password,
     token,
+  });
+};
+
+export const addProduct = async (
+  name: string,
+  price: number,
+  image: string,
+  description: string
+) => {
+  return await request("POST", "/product/", {
+    name,
+    price,
+    image,
+    description,
+  });
+};
+
+export const deleteProduct = async (productId: string) => {
+  return await request("DELETE", `/product/${productId}`);
+};
+
+export const editProduct = async (
+  productId: string,
+  name: string,
+  price: number,
+  image: string,
+  description: string
+) => {
+  return await request("PUT", `/product/${productId}`, {
+    name,
+    price,
+    image,
+    description,
   });
 };

@@ -18,6 +18,12 @@ export const RegisterRequestBodySchema = z.object({
 export const LoginRequestBodySchema = z.object({
   email: z.string().min(1),
   password: z.string().min(1),
+  role: z
+    .string()
+    .min(1)
+    .refine((role) => ["user", "vendor", "admin"].includes(role), {
+      message: "Role must be either 'user', 'vendor', or 'admin'",
+    }),
 });
 
 export const ForgotPasswordRequestBodySchema = z.object({
@@ -46,4 +52,11 @@ export const AddProductRequestBodySchema = z.object({
   image: z.string().min(1),
   price: z.number().min(1),
   description: z.string().min(1),
+});
+
+export const EditProductRequestBodySchema = z.object({
+  name: z.string().min(1).optional(),
+  image: z.string().min(1).optional(),
+  price: z.number().min(1).optional(),
+  description: z.string().min(1).optional(),
 });
