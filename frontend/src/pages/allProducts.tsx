@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
-import {
-  deleteProduct,
-  fetchVendorProducts,
-  fetchAllProducts,
-  editProduct,
-} from "../utils/api";
 import { ProductType } from "../../../api/src/utils/types";
-import AddProduct from "./addProduct";
+import { addToCart, fetchAllProducts } from "../utils/api";
 
 const AllProducts = () => {
   const [products, setProducts] = useState<ProductType[]>([]);
-  const loadProducts = async () => {
+  const loadProducts = () => {
     fetchAllProducts().then((response) => {
       if (!response.success) {
         alert(response.message);
@@ -37,6 +31,20 @@ const AllProducts = () => {
               <h3>{product.name}</h3>
               <p>${product.price}</p>
             </div>
+            <span
+              className="border cursor-pointer bg-blue-300"
+              onClick={() => {
+                addToCart(product._id, 1).then((response) => {
+                  if (response.success) {
+                    alert("Product added to cart");
+                  } else {
+                    alert(response.message);
+                  }
+                });
+              }}
+            >
+              add to cart
+            </span>
           </div>
         ))}
       </div>

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import Stripe from "stripe";
 import { z } from "zod";
 import { authHandler, roleHandler } from "../middlewares/auth";
 import { requestBodyValidationHandler } from "../middlewares/validation";
@@ -6,14 +7,20 @@ import UserModel from "../models/user";
 import { comparePassword, hashPassword } from "../utils/bcrypt";
 import { encodeJwt } from "../utils/jwt";
 import { sendForgotPasswordEmail } from "../utils/nodemailer";
-import { UserRequest } from "../utils/types";
+import { ProductType, UserType } from "../utils/types";
 import {
+  AddToCartRequestBodySchema,
+  AddUserRequestBodySchema,
   ChangePasswordRequestBodySchema,
   ForgotPasswordRequestBodySchema,
   LoginRequestBodySchema,
   RegisterRequestBodySchema,
 } from "../utils/zod";
+import dotenv from "dotenv";
 
+dotenv.config({});
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const UserRouter = Router();
 
 UserRouter.post(
@@ -79,7 +86,7 @@ UserRouter.post(
   }
 );
 
-UserRouter.get("/profile", authHandler, async (req: UserRequest, res, next) => {
+UserRouter.get("/profile", authHandler, async (req, res, next) => {
   try {
     res.send({
       success: true,
@@ -184,7 +191,7 @@ UserRouter.get(
 );
 
 UserRouter.delete(
-  "/user/:userId",
+  "/:userId",
   authHandler,
   roleHandler(["admin"]),
   async (req, res, next) => {
@@ -202,6 +209,192 @@ UserRouter.delete(
       res.send({
         success: true,
         message: "User deleted",
+      });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.post(
+  "/cart",
+  authHandler,
+  roleHandler(["user"]),
+  requestBodyValidationHandler(AddToCartRequestBodySchema),
+  async (req, res, next) => {
+    try {
+      const { productId, quantity } = req.body as z.infer<
+        typeof AddToCartRequestBodySchema
+      >;
+      const user = req.user as UserType;
+
+      await user.updateOne({
+        $push: {
+          cart: {
+            product: productId,
+            quantity,
+          },
+        },
+      });
+
+      res.send({
+        success: true,
+        message: "Product added to cart",
+      });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.get(
+  "/all",
+  authHandler,
+  roleHandler(["admin"]),
+  async (req, res, next) => {
+    try {
+      res.send({
+        success: true,
+        data: await UserModel.find({
+          role: { $ne: "admin" },
+        }).select("_id email role"),
+      });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.post(
+  "/",
+  authHandler,
+  roleHandler(["admin"]),
+  requestBodyValidationHandler(AddUserRequestBodySchema),
+  async (req, res, next) => {
+    try {
+      const { email, role, password } = req.body as z.infer<
+        typeof AddUserRequestBodySchema
+      >;
+
+      await UserModel.create({
+        email,
+        role,
+        password: hashPassword(password),
+      });
+
+      res.send({
+        success: true,
+        message: "User added successfully",
+      });
+
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.get(
+  "/cart",
+  authHandler,
+  roleHandler(["user"]),
+  async (req, res, next) => {
+    try {
+      req.user = await req.user.populate("cart.product");
+      res.send({
+        success: true,
+        data: req.user.cart,
+      });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.put(
+  "/cart/:productId/:quantity",
+  authHandler,
+  roleHandler(["user"]),
+  async (req, res, next) => {
+    try {
+      const productId = req.params.productId;
+      const quantity = parseInt(req.params.quantity);
+      await UserModel.findOneAndUpdate(
+        {
+          _id: req.user._id,
+          "cart.product": productId,
+        },
+        {
+          $set: {
+            "cart.$.quantity": quantity,
+          },
+        }
+      );
+      res.json({
+        success: true,
+        message: "Cart updated",
+      });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.delete(
+  "/cart/:productId",
+  authHandler,
+  roleHandler(["user"]),
+  async (req, res, next) => {
+    try {
+      const productId = req.params.productId;
+      await req.user.updateOne({
+        $pull: {
+          cart: {
+            product: productId,
+          },
+        },
+      });
+      res.json({
+        success: true,
+        message: "Product removed from cart",
+      });
+      return;
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+UserRouter.get(
+  "/checkout",
+  authHandler,
+  roleHandler(["user"]),
+  async (req, res, next) => {
+    try {
+      req.user = await req.user.populate("cart.product");
+
+      const totalAmount = req.user.cart.reduce(
+        (acc, cartItem) =>
+          acc + (cartItem.product as ProductType).price * cartItem.quantity,
+        0
+      );
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmount * 100,
+        currency: process.env.STRIPE_CURRENCY!,
+      });
+
+      res.json({
+        success: true,
+        data: {
+          cart: req.user.cart,
+          clientSecret: paymentIntent.client_secret,
+        },
       });
       return;
     } catch (error) {

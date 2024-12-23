@@ -1,22 +1,22 @@
 import { Router } from "express";
-import ProductModel from "../models/product";
-import { requestBodyValidationHandler } from "../middlewares/validation";
-import {
-  AddProductRequestBodySchema,
-  EditProductRequestBodySchema,
-} from "../utils/zod";
+import { z } from "zod";
 import {
   authHandler,
   permissionHandler,
   roleHandler,
 } from "../middlewares/auth";
-import { z } from "zod";
-import { UserRequest } from "../utils/types";
+import { requestBodyValidationHandler } from "../middlewares/validation";
+import ProductModel from "../models/product";
 import { sendProductsEmail } from "../utils/nodemailer";
+import {
+  AddProductRequestBodySchema,
+  EditProductRequestBodySchema,
+} from "../utils/zod";
+import { UserType } from "../utils/types";
 
 const ProductRouter = Router();
 
-ProductRouter.get("/list", async (req: UserRequest, res, next) => {
+ProductRouter.get("/list", async (req, res, next) => {
   try {
     const products = await ProductModel.find({}).select("-__v");
     res.json({
@@ -33,10 +33,11 @@ ProductRouter.get(
   "/vendor",
   authHandler,
   roleHandler(["vendor"]),
-  async (req: UserRequest, res, next) => {
+  async (req, res, next) => {
     try {
+      const user = req.user as UserType;
       const products = await ProductModel.find({
-        user: req.user._id,
+        user: user._id,
       }).select("-__v");
       res.json({
         success: true,
@@ -54,8 +55,10 @@ ProductRouter.post(
   requestBodyValidationHandler(AddProductRequestBodySchema),
   authHandler,
   roleHandler(["vendor"]),
-  async (req: UserRequest, res, next) => {
+  async (req, res, next) => {
     try {
+      const user = req.user as UserType;
+
       const { name, price, description, image } = req.body as z.infer<
         typeof AddProductRequestBodySchema
       >;
@@ -65,7 +68,7 @@ ProductRouter.post(
         price,
         description,
         image,
-        user: req.user._id,
+        user: user._id,
       });
 
       res.json({
@@ -85,9 +88,11 @@ ProductRouter.post(
   authHandler,
   roleHandler(["vendor"]),
   permissionHandler(["product.email"]),
-  async (req: UserRequest, res, next) => {
+  async (req, res, next) => {
     try {
-      const products = await ProductModel.find({ user: req.user._id });
+      const user = req.user as UserType;
+
+      const products = await ProductModel.find({ user: user._id });
 
       await sendProductsEmail(req.user.email, products);
 
@@ -107,13 +112,15 @@ ProductRouter.delete(
   "/:productId",
   authHandler,
   roleHandler(["vendor"]),
-  async (req: UserRequest, res, next) => {
+  async (req, res, next) => {
     try {
+      const user = req.user as UserType;
+
       const { productId } = req.params;
 
       await ProductModel.deleteOne({
         _id: productId,
-        user: req.user._id,
+        user: user._id,
       });
 
       res.json({
@@ -133,8 +140,10 @@ ProductRouter.put(
   authHandler,
   roleHandler(["vendor"]),
   requestBodyValidationHandler(EditProductRequestBodySchema),
-  async (req: UserRequest, res, next) => {
+  async (req, res, next) => {
     try {
+      const user = req.user as UserType;
+
       const { name, price, description, image } = req.body as z.infer<
         typeof EditProductRequestBodySchema
       >;
@@ -142,7 +151,7 @@ ProductRouter.put(
 
       const product = await ProductModel.findOne({
         _id: productId,
-        user: req.user._id,
+        user: user._id,
       });
       if (!product) {
         res.json({

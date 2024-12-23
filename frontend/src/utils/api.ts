@@ -1,13 +1,14 @@
 import axios from "axios";
 import { getAuthToken } from "./localStorage";
+import { ProductType, UserType } from "../../../api/src/utils/types";
 
-const request = async (
+const request = async <DataType>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   url: string,
   data: any = {}
 ): Promise<{
   success: boolean;
-  data: any;
+  data: DataType;
   message: string;
 }> => {
   const response = await axios.request({
@@ -23,11 +24,11 @@ const request = async (
 };
 
 export const fetchVendorProducts = async () => {
-  return await request("GET", "/product/vendor");
+  return await request<ProductType[]>("GET", "/product/vendor");
 };
 
 export const fetchAllProducts = async () => {
-  return await request("GET", "/product/list");
+  return await request<ProductType[]>("GET", "/product/list");
 };
 
 export const registerUser = async (
@@ -47,7 +48,7 @@ export const loginUser = async (
   password: string,
   role: string
 ) => {
-  return await request("POST", "/user/login", {
+  return await request<string>("POST", "/user/login", {
     email,
     password,
     role,
@@ -55,7 +56,7 @@ export const loginUser = async (
 };
 
 export const getUserProfile = async () => {
-  return await request("GET", "/user/profile");
+  return await request<UserType>("GET", "/user/profile");
 };
 
 export const forgotPassword = async (email: string) => {
@@ -64,19 +65,12 @@ export const forgotPassword = async (email: string) => {
   });
 };
 
-export const loginAdmin = async (email: string, password: string) => {
-  return await request("POST", "/admin/login", {
-    email,
-    password,
-  });
-};
-
 export const getUsers = async () => {
-  return await request("GET", "/admin/users");
+  return await request<UserType[]>("GET", "/user/all");
 };
 
 export const deleteUser = async (userId: string) => {
-  return await request("DELETE", `/admin/user/${userId}`);
+  return await request("DELETE", `/user/${userId}`);
 };
 
 export const changePassword = async (password: string, token: string) => {
@@ -117,4 +111,42 @@ export const editProduct = async (
     image,
     description,
   });
+};
+
+export const addToCart = async (productId: string, quantity: number) => {
+  return await request("POST", `/user/cart`, {
+    productId,
+    quantity,
+  });
+};
+
+export const fetchCart = async () => {
+  return await request<UserType["cart"]>("GET", `/user/cart`);
+};
+
+export const addUser = async (
+  email: string,
+  role: string,
+  password: string
+) => {
+  return await request("POST", `/user/`, {
+    email,
+    role,
+    password,
+  });
+};
+
+export const removeFromCart = async (productId: string) => {
+  return await request("DELETE", `/user/cart/${productId}`);
+};
+
+export const editCartProduct = async (productId: string, quantity: number) => {
+  return await request("PUT", `/user/cart/${productId}/${quantity}`);
+};
+
+export const getCheckout = async () => {
+  return await request<{
+    cart: UserType["cart"];
+    clientSecret: string;
+  }>("GET", `/user/checkout`);
 };

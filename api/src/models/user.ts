@@ -26,6 +26,36 @@ const schema = new Schema<UserType>({
     type: [String],
     default: [],
   },
+  cart: {
+    type: [
+      {
+        product: {
+          type: Schema.Types.ObjectId,
+          ref: "Product",
+        },
+        quantity: Number,
+      },
+    ],
+    default: [],
+  },
+  orders: {
+    type: [
+      {
+        products: [
+          {
+            product: {
+              type: Schema.Types.ObjectId,
+              ref: "Product",
+            },
+            quantity: Number,
+          },
+        ],
+        address: String,
+        email: String,
+      },
+    ],
+    default: [],
+  },
 });
 
 export const UserModelName = "User";

@@ -1,24 +1,28 @@
-import { Request } from "express";
-import { Types } from "mongoose";
+import { Document, Types } from "mongoose";
 
-export interface UserRequest extends Request {
-  user?: any;
-}
-
-export type ProductType = {
+export interface ProductType extends Document {
   _id: string;
   name: string;
   image: string;
   price: number;
   description: string;
-  user: Types.ObjectId | UserType;
-};
+  user: Types.ObjectId | UserType | string;
+}
 
-export type UserType = {
+export interface UserType extends Document {
   _id: string;
   email: string;
   password: string;
   forgotPasswordToken: number | null;
   role: "user" | "admin" | "vendor";
   permissions: string[];
-};
+  cart: { product: Types.ObjectId | ProductType | string; quantity: number }[];
+  orders: {
+    products: {
+      product: Types.ObjectId | ProductType | string;
+      quantity: number;
+    }[];
+    address: string;
+    email: string;
+  }[];
+}

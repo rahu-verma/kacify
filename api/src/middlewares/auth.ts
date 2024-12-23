@@ -1,14 +1,9 @@
+import { RequestHandler } from "express";
 import { JwtPayload } from "jsonwebtoken";
 import User from "../models/user";
 import { decodeJwt } from "../utils/jwt";
-import { RequestHandler } from "express";
-import { UserRequest } from "../utils/types";
 
-export const authHandler: RequestHandler = async (
-  req: UserRequest,
-  res,
-  next
-) => {
+export const authHandler: RequestHandler = async (req, res, next) => {
   const authToken = req.headers.authorization;
   if (!authToken) {
     res.send({
@@ -40,7 +35,7 @@ export const authHandler: RequestHandler = async (
 
 export const roleHandler =
   (roles: string[]): RequestHandler =>
-  async (req: UserRequest, res, next) => {
+  async (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       res.send({
         success: false,
@@ -53,7 +48,7 @@ export const roleHandler =
 
 export const permissionHandler =
   (permissions: string[]): RequestHandler =>
-  async (req: UserRequest, res, next) => {
+  async (req, res, next) => {
     if (
       !permissions.every((permission) =>
         req.user.permissions.includes(permission)
